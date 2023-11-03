@@ -1,0 +1,28 @@
+{
+  "Uptask": {
+    "1": {
+      "name": "Tarea 1",
+      "emoji": "📝",
+      "tasks": {
+        "1": {
+          "name": "Task Test 1",
+          "description": "Optional description",
+          "dueDate": "2020-12-31",
+          "tags": {
+            "important": "red",
+            "work": "blue"
+          }
+        },
+        "2": {
+          "name": "Task Test 1",
+          "description": "Optional description",
+          "dueDate": "2020-12-31",
+          "tags": {
+            "important": "red",
+            "work": "blue"
+          }
+        }
+      }
+    }
+  }
+}

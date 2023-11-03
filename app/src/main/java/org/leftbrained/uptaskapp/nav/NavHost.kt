@@ -1,6 +1,8 @@
 package org.leftbrained.uptaskapp.nav
 
+import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -15,7 +17,7 @@ import org.leftbrained.uptaskapp.classes.TaskList
 import org.leftbrained.uptaskapp.classes.TaskListAll
 
 @Composable
-fun GeneralNav() {
+fun GeneralNav(): NavHostController {
     val navController = rememberNavController()
     var tasks = TaskListAll(listOf(TaskList(), TaskList()))
 
@@ -37,4 +39,5 @@ fun GeneralNav() {
             )
         }
     }
+    return navController
 }

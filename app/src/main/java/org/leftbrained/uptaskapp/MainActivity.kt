@@ -1,5 +1,8 @@
 package org.leftbrained.uptaskapp
 
+import android.content.Context
+import android.content.Context.MODE_PRIVATE
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -44,12 +47,23 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             AppTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    GeneralNav()
+                    var host = GeneralNav()
+                    val sharedPref: SharedPreferences =
+                        getPreferences(MODE_PRIVATE) ?: return@Surface
+                    val hasVisited = sharedPref.getBoolean("hasVisited", false)
+                    if (!hasVisited) {
+                        with(sharedPref.edit()) {
+                            putBoolean("hasVisited", true)
+                            apply()
+                            host.navigate("main")
+                        }
+                    } else {
+                        host.navigate("taskList")
+                    }
                 }
             }
         }
@@ -89,7 +103,10 @@ fun WelcomeScreen(navController: NavController) {
                     text = "Organize your tasks",
                     modifier = Modifier.padding(top = 8.dp),
                 )
-                Button(onClick = { navController.navigate("taskList") }, modifier = Modifier.padding(top = 24.dp)) {
+                Button(
+                    onClick = { navController.navigate("taskList") },
+                    modifier = Modifier.padding(top = 24.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Rounded.PlayArrow,
                         contentDescription = "Play arrow icon"
@@ -99,7 +116,11 @@ fun WelcomeScreen(navController: NavController) {
             }
         }
         Column(Modifier.padding(top = 48.dp)) {
-            Text(text = "Here's what you can do with Uptask", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+            Text(
+                text = "Here's what you can do with Uptask",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold
+            )
             Spacer(Modifier.size(24.dp))
             UnorderedList("Create/edit/remove task lists")
             UnorderedList("Add/delete/edit tasks from your lists")
