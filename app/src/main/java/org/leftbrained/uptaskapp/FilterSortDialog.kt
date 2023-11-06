@@ -1,13 +1,11 @@
 package org.leftbrained.uptaskapp
 
-import android.widget.RadioGroup
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -15,7 +13,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,7 +48,9 @@ fun FilterSortDialog(onDismissRequest: () -> Unit, taskList: TaskList) {
                         Text("Date")
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(selected = sortPriority, onClick = { sortPriority = !sortPriority })
+                        RadioButton(
+                            selected = sortPriority,
+                            onClick = { sortPriority = !sortPriority })
                         Text("Priority")
                     }
                 }

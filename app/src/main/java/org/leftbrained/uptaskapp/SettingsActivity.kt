@@ -4,23 +4,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,7 +34,7 @@ fun SettingsActivity(navController: NavController, onDismissRequest: () -> Unit)
                 Text("Settings", style = MaterialTheme.typography.titleLarge)
                 Spacer(modifier = Modifier.padding(8.dp))
                 Text("Theme", style = MaterialTheme.typography.titleMedium)
-                Switch(checked = themeSwitch, onCheckedChange = { themeSwitch = !themeSwitch } )
+                Switch(checked = themeSwitch, onCheckedChange = { themeSwitch = !themeSwitch })
                 Button(onClick = { onDismissRequest() }) {
                     Text("Save")
                 }
