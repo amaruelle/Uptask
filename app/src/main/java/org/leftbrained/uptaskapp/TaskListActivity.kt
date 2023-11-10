@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,6 +60,9 @@ import org.leftbrained.uptaskapp.ui.theme.AppTheme
 fun TaskListScreen(taskLists: TaskListAll, navController: NavController) {
     var showAddDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var showFilter by remember { mutableStateOf(false) }
+    var showSearch by remember { mutableStateOf(false) }
+    var search by remember { mutableStateOf("") }
     Scaffold(topBar = {
         TopAppBar(
             title = {
@@ -68,13 +72,24 @@ fun TaskListScreen(taskLists: TaskListAll, navController: NavController) {
                 }
             },
             actions = {
-                IconButton(onClick = { /*TODO*/ }) {
+                if (showSearch) {
+                    OutlinedTextField(
+                        value = search,
+                        onValueChange = { search = it },
+                        label = { Text("Search") },
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .width(150.dp),
+                        maxLines = 1
+                    )
+                }
+                IconButton(onClick = { showSearch = !showSearch }) {
                     Icon(
                         imageVector = Icons.Rounded.Search,
                         contentDescription = "Search"
                     )
                 }
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = { showFilter = !showFilter }) {
                     Icon(
                         imageVector = Icons.Rounded.List,
                         contentDescription = "Settings"
@@ -119,6 +134,13 @@ fun TaskListScreen(taskLists: TaskListAll, navController: NavController) {
             }
             if (showSettings) {
                 SettingsActivity(navController = navController) { showSettings = false }
+            }
+            if (showFilter) {
+                FilterSortDialog(
+                    onDismissRequest = { showFilter = false },
+                    taskList = null,
+                    taskLists = taskLists
+                )
             }
         }
     }
@@ -240,7 +262,7 @@ fun TaskListRowPreview() {
     AppTheme {
         TaskListScreen(
             taskLists = TaskListAll(
-                listOf(
+                mutableListOf(
                     TaskList(
                         "Test",
                         "Test",

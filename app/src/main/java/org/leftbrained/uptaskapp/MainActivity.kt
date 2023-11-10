@@ -44,19 +44,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    var host = GeneralNav()
-                    val sharedPref: SharedPreferences =
-                        getPreferences(MODE_PRIVATE) ?: return@Surface
-                    val hasVisited = sharedPref.getBoolean("hasVisited", false)
-                    if (!hasVisited) {
-                        with(sharedPref.edit()) {
-                            putBoolean("hasVisited", true)
-                            apply()
-                            host.navigate("main")
-                        }
-                    } else {
-                        host.navigate("taskList")
-                    }
+                    GeneralNav()
                 }
             }
         }
