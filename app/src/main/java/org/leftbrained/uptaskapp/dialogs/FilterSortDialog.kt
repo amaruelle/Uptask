@@ -1,4 +1,4 @@
-package org.leftbrained.uptaskapp
+package org.leftbrained.uptaskapp.dialogs
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,7 +8,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -24,20 +23,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import org.leftbrained.uptaskapp.classes.TaskList
-import org.leftbrained.uptaskapp.classes.TaskListAll
+import org.leftbrained.uptaskapp.classes.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterSortDialog(
     onDismissRequest: () -> Unit,
-    taskList: TaskList? = null,
-    taskLists: TaskListAll? = null
+    taskListId: Int? = null
 ) {
     var sortName by remember { mutableStateOf(false) }
     var sortDate by remember { mutableStateOf(false) }
     var sortPriority by remember { mutableStateOf(false) }
     var filterQuery by remember { mutableStateOf("") }
+    val taskListsViewmodel = remember { TaskListsViewmodel() }
+    val tasksViewmodel = remember { TasksViewmodel() }
+    val taskList = remember { taskListId?.let { taskListsViewmodel.getTaskList(it) } }
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(shape = RoundedCornerShape(16.dp)) {
             Column(Modifier.padding(16.dp)) {
@@ -75,24 +74,30 @@ fun FilterSortDialog(
                 Button(onClick = {
                     if (taskList != null) {
                         if (sortName) {
-                            taskList.tasks.sortBy { it.name }
+                            if (taskListId != null) {
+                                tasksViewmodel.getTasks(taskListId).sortedBy { it.task }
+                            }
                         }
                         if (sortDate) {
-                            taskList.tasks.sortBy { it.dueDate }
+                            if (taskListId != null) {
+                                tasksViewmodel.getTasks(taskListId).sortedBy { it.dueDate }
+                            }
                         }
                         if (sortPriority) {
-                            taskList.tasks.sortBy { it.priority }
+                            if (taskListId != null) {
+                                tasksViewmodel.getTasks(taskListId).sortedBy { it.priority }
+                            }
                         }
                     }
-                    if (taskLists != null) {
+                    if (taskListId != null) {
                         if (sortName) {
-                            taskLists.list.sortBy { it.name }
+                            TasksViewmodel().getTasks(taskListId).sortedBy { it.task }
                         }
                         if (sortDate) {
-                            taskLists.list.sortBy { it.emoji }
+                            TasksViewmodel().getTasks(taskListId).sortedBy { it.dueDate }
                         }
                         if (sortPriority) {
-                            taskLists.list.sortBy { it.tasks[0].priority }
+                            TasksViewmodel().getTasks(taskListId).sortedBy { it.priority }
                         }
                     }
                 }) {

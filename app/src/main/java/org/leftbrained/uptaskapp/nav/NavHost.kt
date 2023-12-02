@@ -4,12 +4,6 @@ import android.app.Activity
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.datastore.*
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
-import androidx.lifecycle.LiveData
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -17,25 +11,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
-import kotlinx.serialization.json.Json
-import org.leftbrained.uptaskapp.ModifyTaskDialog
-import org.leftbrained.uptaskapp.R
+import org.leftbrained.uptaskapp.AuthActivity
+import org.leftbrained.uptaskapp.dialogs.ModifyTaskDialog
+import org.leftbrained.uptaskapp.RegisterActivity
 import org.leftbrained.uptaskapp.TaskActivity
-import org.leftbrained.uptaskapp.TaskListScreen
+import org.leftbrained.uptaskapp.TaskListActivity
 import org.leftbrained.uptaskapp.WelcomeScreen
-import org.leftbrained.uptaskapp.classes.Task
-import org.leftbrained.uptaskapp.classes.TaskList
-import org.leftbrained.uptaskapp.classes.TaskListAll
-import java.lang.Boolean.getBoolean
 
 @Composable
 fun GeneralNav(): NavHostController {
     val navController = rememberNavController()
-    var tasks = TaskListAll(mutableListOf(TaskList(), TaskList()))
 
     val activity = LocalContext.current as Activity
     val sharedPref = activity.getPreferences(Context.MODE_PRIVATE)
@@ -49,29 +34,36 @@ fun GeneralNav(): NavHostController {
             "main"
         }
     } else {
-        "taskList"
+        "main"
     }) {
         composable("main") {
             WelcomeScreen(navController)
         }
-        composable("taskList") {
-            TaskListScreen(tasks, navController)
+        composable("taskList/{user}") {
+            TaskListActivity(
+                navController = navController,
+                userId = it.arguments?.getString("user")?.toInt() ?: 0
+            )
         }
         composable(
-            "task/{task}",
+            "task/{listId}/{task}",
             arguments = listOf(navArgument("task") { type = NavType.StringType })
         ) {
             TaskActivity(
-                taskList = Json.decodeFromString<TaskList>(
-                    it.arguments?.getString("task") ?: "{}"
-                ), navController = navController
+                taskListId = it.arguments?.getString("listId")?.toInt() ?: 0, navController = navController
             )
         }
         dialog("modifyTask/{task}") {
-            val task = Json.decodeFromString<Task>(it.arguments?.getString("task") ?: "{}")
+            val task = it.arguments?.getString("task")
             ModifyTaskDialog(onDismissRequest = {
                 navController.popBackStack()
-            }, task = task)
+            }, taskId = task?.toInt() ?: 0)
+        }
+        composable("auth") {
+            AuthActivity(navController)
+        }
+        composable("register") {
+            RegisterActivity(navController)
         }
     }
     return navController

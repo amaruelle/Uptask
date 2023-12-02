@@ -1,90 +1,62 @@
 package org.leftbrained.uptaskapp
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.rounded.List
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.BottomAppBarDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import org.leftbrained.uptaskapp.classes.Task
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.classes.TaskList
+import org.leftbrained.uptaskapp.classes.TaskListsViewmodel
+import org.leftbrained.uptaskapp.classes.TasksViewmodel
+import org.leftbrained.uptaskapp.classes.User
+import org.leftbrained.uptaskapp.components.TaskView
+import org.leftbrained.uptaskapp.dialogs.AddTaskDialog
+import org.leftbrained.uptaskapp.dialogs.SettingsDialog
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskActivity(taskList: TaskList, navController: NavController) {
+fun TaskActivity(taskListId: Int, navController: NavController) {
     var showSettings by remember { mutableStateOf(false) }
     var showAddTask by remember { mutableStateOf(false) }
     var showFilter by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
+    val tasksViewmodel = TasksViewmodel()
+    val taskListsDao = TaskListsViewmodel()
+    val taskList = taskListsDao.getTaskList(taskListId)
+    val tasks = tasksViewmodel.getTasks(taskListId)
     Scaffold(topBar = {
         TopAppBar(title = {
             Column {
                 Text("Uptask", style = MaterialTheme.typography.titleLarge)
-                Text(
-                    text = "${taskList.emoji} ${taskList.name}",
-                    style = MaterialTheme.typography.labelMedium
-                )
+                if (taskList != null) {
+                    Text(
+                        text = "${taskList.emoji} ${taskList.name}",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
             }
         }, navigationIcon = {
             IconButton(onClick = {
                 navController.navigate("taskList")
             }) {
                 Icon(
-                    imageVector = Icons.Rounded.KeyboardArrowLeft, contentDescription = "Back"
+                    imageVector = Icons.Rounded.KeyboardArrowLeft, contentDescription = "Back icon"
                 )
             }
         }, actions = {
@@ -93,18 +65,20 @@ fun TaskActivity(taskList: TaskList, navController: NavController) {
                     value = search,
                     onValueChange = { search = it },
                     label = { Text("Search") },
-                    modifier = Modifier.padding(end = 8.dp).width(150.dp),
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .width(150.dp),
                     maxLines = 1
                 )
             }
             IconButton(onClick = { showSearch = !showSearch }) {
                 Icon(
-                    imageVector = Icons.Rounded.Search, contentDescription = "Search"
+                    imageVector = Icons.Rounded.Search, contentDescription = "Search icon"
                 )
             }
             IconButton(onClick = { showFilter = !showFilter }) {
                 Icon(
-                    imageVector = Icons.Rounded.List, contentDescription = "Settings"
+                    imageVector = Icons.Rounded.List, contentDescription = "Filter icon"
                 )
             }
         }, colors = TopAppBarDefaults.largeTopAppBarColors(
@@ -115,7 +89,7 @@ fun TaskActivity(taskList: TaskList, navController: NavController) {
         BottomAppBar(actions = {
             IconButton(onClick = { showSettings = !showSettings }) {
                 Icon(
-                    imageVector = Icons.Rounded.Settings, contentDescription = "Settings"
+                    imageVector = Icons.Rounded.Settings, contentDescription = "Settings icon"
                 )
             }
         }, floatingActionButton = {
@@ -124,7 +98,7 @@ fun TaskActivity(taskList: TaskList, navController: NavController) {
                 containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                 elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
             ) {
-                Icon(Icons.Filled.Add, "Localized description")
+                Icon(Icons.Filled.Add, "Add icon")
             }
         })
     }) { innerPadding ->
@@ -133,310 +107,28 @@ fun TaskActivity(taskList: TaskList, navController: NavController) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            for (task in taskList.tasks) {
-                TaskView(navController, task, taskList)
+            for (task in tasks) {
+                val taskId = transaction {
+                    task.id.value
+                }
+                TaskView(navController, taskId)
             }
             if (showSettings) {
-                SettingsActivity(navController = navController) { showSettings = false }
+                SettingsDialog { showSettings = false }
             }
             if (showAddTask) {
-                AddTaskDialog(onDismissRequest = { showAddTask = false }, taskList)
-            }
-            if (showFilter) {
-                FilterSortDialog(onDismissRequest = { showFilter = false }, taskList)
+                AddTaskDialog(onDismissRequest = { showAddTask = false }, taskList!!)
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TaskView(navController: NavController, task: Task, taskList: TaskList) {
-    var isChecked by remember { mutableStateOf(task.isCompleted) }
-    Row(
-        Modifier
-            .padding(12.dp)
-            .background(
-                MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(16.dp)
-            )
-            .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(checked = isChecked, onCheckedChange = {
-            isChecked = !isChecked
-            task.isCompleted = !task.isCompleted
-            if (task.isCompleted) {
-                taskList.tasks.remove(task)
-            }
-        })
-        Column(Modifier.padding(12.dp)) {
-            Text(
-                text = task.name,
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 8.dp),
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = task.description,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Rounded.DateRange,
-                    contentDescription = "Date range icon",
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.tertiary
-                )
-                Text(
-                    text = task.dueDate,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
-            Row {
-                for (tag in task.tags) {
-                    AssistChip(
-                        label = { Text(text = tag) },
-                        onClick = { task.tags.remove(tag) },
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                }
-            }
-        }
-        Spacer(Modifier.weight(1f))
-        IconButton(onClick = {
-            navController.navigate("modifyTask/${Json.encodeToString(task)}")
-        }) {
-            Icon(
-                imageVector = Icons.Rounded.Settings,
-                contentDescription = "Settings for task",
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ModifyTaskDialog(onDismissRequest: () -> Unit, task: Task) {
-    var name by remember { mutableStateOf(task.name) }
-    var desc by remember { mutableStateOf(task.description) }
-    var dueDate by remember {
-        mutableStateOf(
-            "2023-01-01"
-        )
-    }
-    var priority by remember { mutableIntStateOf(task.priority) }
-    var tagEnter by remember { mutableStateOf("") }
-    Dialog(onDismissRequest = { onDismissRequest() }) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Column(Modifier.padding(16.dp)) {
-                Text(
-                    text = "Modify Task",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "Enter values for new task",
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                )
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name") },
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-                OutlinedTextField(
-                    value = desc,
-                    onValueChange = { desc = it },
-                    label = { Text("Description") },
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-                OutlinedTextField(
-                    value = priority.toString(),
-                    onValueChange = { priority = it.toInt() },
-                    label = { Text("Priority") },
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-                OutlinedTextField(
-                    value = dueDate,
-                    onValueChange = { dueDate = it },
-                    label = { Text("Due Date") },
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    for (tag in task.tags) {
-                        AssistChip(
-                            label = { Text(text = tag) },
-                            onClick = { task.tags.remove(tag) },
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                    }
-                    OutlinedTextField(
-                        value = tagEnter,
-                        onValueChange = { tagEnter = it },
-                        modifier = Modifier
-                            .width(100.dp)
-                            .padding(top = 16.dp),
-                        label = { Text("Tags") })
-                    IconButton(onClick = {
-                        task.tags.add(tagEnter)
-                        tagEnter = ""
-                    }) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Add tag icon"
-                        )
-                    }
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                ) {
-                    Button(onClick = {
-                        task.name = name
-                        task.description = desc
-                        task.dueDate = dueDate
-                        task.priority = priority
-                        onDismissRequest()
-                    }, modifier = Modifier.weight(1f)) {
-                        Text(text = "Modify")
-                    }
-                    OutlinedButton(
-                        onClick = { onDismissRequest() },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(text = "Cancel")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList) {
-    var name by remember { mutableStateOf("My Task") }
-    var desc by remember { mutableStateOf("My Description") }
-    var dueDate by remember {
-        mutableStateOf(
-            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-        )
-    }
-    var tags by remember { mutableStateOf(mutableStateListOf<String>()) }
-    var priority by remember { mutableIntStateOf(0) }
-    var tagEnter by remember { mutableStateOf("") }
-    Dialog(onDismissRequest = { onDismissRequest() }) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Column(Modifier.padding(16.dp)) {
-                Text(
-                    text = "Add Task",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "Enter values for new task",
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                )
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Name") },
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-                OutlinedTextField(
-                    value = desc,
-                    onValueChange = { desc = it },
-                    label = { Text("Description") },
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-                OutlinedTextField(
-                    value = priority.toString(),
-                    onValueChange = { priority = it.toInt() },
-                    label = { Text("Priority") },
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-                OutlinedTextField(
-                    value = dueDate,
-                    onValueChange = { dueDate = it },
-                    label = { Text("Due Date") },
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    for (tag in tags) {
-                        AssistChip(
-                            label = { Text(text = tag) },
-                            onClick = { tags.remove(tag) },
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                    }
-                    OutlinedTextField(
-                        value = tagEnter,
-                        onValueChange = { tagEnter = it },
-                        modifier = Modifier
-                            .width(100.dp)
-                            .padding(top = 16.dp),
-                        label = { Text("Tags") })
-                    IconButton(onClick = {
-                        tags.add(tagEnter)
-                        tagEnter = ""
-                    }) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Add tag icon"
-                        )
-                    }
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                ) {
-                    Button(onClick = {
-                        taskList.add(Task(false, name, desc, dueDate, tags, 0))
-                        onDismissRequest()
-                    }, modifier = Modifier.weight(1f)) {
-                        Text(text = "Add")
-                    }
-                    OutlinedButton(
-                        onClick = { onDismissRequest() },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(text = "Cancel")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Preview(device = "id:pixel_7_pro")
+@Preview(device = "spec:width=411dp,height=891dp")
 @Composable
 fun TaskActivityPreview() {
     AppTheme {
-        TaskActivity(taskList = TaskList(), rememberNavController())
+        TaskActivity(TaskList.new {
+            this.userId = User.findById(0)!!; this.emoji = "F"; this.name = "TaskList 1"
+        }.id.value, rememberNavController())
     }
 }
