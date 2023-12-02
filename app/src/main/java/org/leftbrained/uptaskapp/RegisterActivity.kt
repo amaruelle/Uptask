@@ -14,7 +14,6 @@ import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,16 +31,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.classes.UptaskDb
 import org.leftbrained.uptaskapp.classes.User
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterActivity(navController: NavController) {
     var login by remember {
@@ -57,7 +52,7 @@ fun RegisterActivity(navController: NavController) {
         mutableStateOf(false)
     }
     val context = LocalContext.current
-    var activity = context.findActivity()
+    val activity = context.findActivity()
     AppTheme {
         Column(
             Modifier
