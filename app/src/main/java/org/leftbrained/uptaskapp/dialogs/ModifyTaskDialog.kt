@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,14 +14,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.datetime.LocalDate
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.classes.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.classes.Tag
-import org.leftbrained.uptaskapp.classes.TagsViewmodel
-import org.leftbrained.uptaskapp.viewmodel.TaskViewModel
+import org.leftbrained.uptaskapp.classes.UptaskDb
+import org.leftbrained.uptaskapp.classes.UserTask
 
 @Composable
-fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int) {
-    val vm: TaskViewModel = viewModel()
-    val task = vm.getTaskById(taskId)
+fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStateViewmodel = viewModel()) {
+    val task by remember(vm.databaseState) {
+        derivedStateOf {
+            transaction {
+                UserTask.find { UptaskDb.UserTasks.id eq taskId }.elementAt(0)
+            }
+        }
+    }
     var name by remember { mutableStateOf(task.task) }
     var desc by remember { mutableStateOf(task.description) }
     var dueDate = remember {
@@ -28,7 +36,13 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int) {
     }
     var priority by remember { mutableIntStateOf(task.priority) }
     var tagEnter by remember { mutableStateOf("") }
-    val taskTags = TagsViewmodel().getTags(taskId)
+    val taskTags by remember(vm.databaseState) {
+        derivedStateOf {
+            transaction {
+                Tag.find { UptaskDb.TaskTags.taskId eq taskId }.toList()
+            }
+        }
+    }
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier
@@ -65,7 +79,7 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int) {
                 )
                 OutlinedTextField(
                     value = priority.toString(),
-                    onValueChange = { priority = it.toInt() },
+                    onValueChange = { priority = if (it == "") 0 else it.toInt() },
                     label = { Text("Priority") },
                     modifier = Modifier.padding(top = 16.dp)
                 )
@@ -79,7 +93,12 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int) {
                     for (tag in taskTags) {
                         AssistChip(
                             label = { Text(text = tag.tag) },
-                            onClick = { tag.delete() },
+                            onClick = {
+                                transaction {
+                                    tag.delete()
+                                }
+                                vm.databaseState++
+                            },
                             modifier = Modifier.padding(end = 8.dp)
                         )
                     }
@@ -91,8 +110,14 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int) {
                             .padding(top = 16.dp),
                         label = { Text("Tags") })
                     IconButton(onClick = {
-                        TagsViewmodel().addTag(Tag.new { tag = tagEnter })
+                        transaction {
+                            Tag.new {
+                                tag = tagEnter
+                                this.taskId = task
+                            }
+                        }
                         tagEnter = ""
+                        vm.databaseState++
                     }) {
                         Icon(
                             imageVector = Icons.Filled.Add,
@@ -107,10 +132,13 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int) {
                         .padding(top = 16.dp)
                 ) {
                     Button(onClick = {
-                        task.task = name
-                        task.description = desc
-                        task.dueDate = LocalDate.parse(dueDate)
-                        task.priority = priority.toString().toInt()
+                        transaction {
+                            task.task = name
+                            task.description = desc
+                            task.dueDate = LocalDate.parse(dueDate)
+                            task.priority = priority
+                        }
+                        vm.databaseState++
                         onDismissRequest()
                     }, modifier = Modifier.weight(1f)) {
                         Text(text = "Modify")
@@ -120,6 +148,21 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int) {
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(text = "Cancel")
+                    }
+                    IconButton(
+                        onClick = {
+                            transaction {
+                                task.delete()
+                            }
+                            onDismissRequest()
+                            vm.databaseState++
+                        },
+                        modifier = Modifier.width(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Delete,
+                            contentDescription = "Delete"
+                        )
                     }
                 }
             }

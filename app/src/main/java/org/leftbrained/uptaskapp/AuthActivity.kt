@@ -132,7 +132,8 @@ fun AuthActivity(navController: NavController) {
                     putString("user", user.id.value.toString())
                     apply()
                 }
-                navController.navigate("taskList/${user.id.value}")
+                val userId = transaction { user.id.value }
+                navController.navigate("taskList/$userId")
             }) {
                 Text(text = "Sign in")
                 Spacer(Modifier.size(8.dp))

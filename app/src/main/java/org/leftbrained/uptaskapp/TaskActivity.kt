@@ -16,13 +16,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.TaskList
-import org.leftbrained.uptaskapp.classes.TaskListsViewmodel
-import org.leftbrained.uptaskapp.classes.TasksViewmodel
-import org.leftbrained.uptaskapp.classes.User
+import org.leftbrained.uptaskapp.classes.*
 import org.leftbrained.uptaskapp.components.TaskView
 import org.leftbrained.uptaskapp.dialogs.AddTaskDialog
 import org.leftbrained.uptaskapp.dialogs.SettingsDialog
@@ -30,16 +28,24 @@ import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskActivity(taskListId: Int, navController: NavController) {
+fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStateViewmodel = viewModel(), userId: Int) {
     var showSettings by remember { mutableStateOf(false) }
     var showAddTask by remember { mutableStateOf(false) }
     var showFilter by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
-    val tasksViewmodel = TasksViewmodel()
-    val taskListsDao = TaskListsViewmodel()
-    val taskList = taskListsDao.getTaskList(taskListId)
-    val tasks = tasksViewmodel.getTasks(taskListId)
+    val taskList = transaction {
+        TaskList.find { UptaskDb.TaskLists.id eq taskListId }.firstOrNull()
+    }
+    val tasks by remember(vm.databaseState) {
+        derivedStateOf {
+            transaction {
+                UserTask.find {
+                    UptaskDb.UserTasks.taskListId eq taskListId
+                }.toList()
+            }
+        }
+    }
     Scaffold(topBar = {
         TopAppBar(title = {
             Column {
@@ -53,7 +59,7 @@ fun TaskActivity(taskListId: Int, navController: NavController) {
             }
         }, navigationIcon = {
             IconButton(onClick = {
-                navController.navigate("taskList")
+                navController.navigate("taskList/$userId")
             }) {
                 Icon(
                     imageVector = Icons.Rounded.KeyboardArrowLeft, contentDescription = "Back icon"
@@ -129,6 +135,6 @@ fun TaskActivityPreview() {
     AppTheme {
         TaskActivity(TaskList.new {
             this.userId = User.findById(0)!!; this.emoji = "F"; this.name = "TaskList 1"
-        }.id.value, rememberNavController())
+        }.id.value, rememberNavController(), userId = 0)
     }
 }

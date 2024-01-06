@@ -17,10 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.classes.TaskList
 
 @Composable
-fun TaskListRow(taskList: TaskList, navController: NavController) {
+fun TaskListRow(taskList: TaskList, navController: NavController, userId: Int) {
+    val taskListId = transaction {
+        taskList.id.value
+    }
     Row(
         Modifier
             .padding(12.dp)
@@ -30,8 +34,7 @@ fun TaskListRow(taskList: TaskList, navController: NavController) {
             )
             .fillMaxWidth()
             .clickable {
-                navController.navigate("task/${taskList.id.value}")
-
+                navController.navigate("task/$userId/$taskListId")
             }, verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.padding(12.dp)) {
@@ -47,13 +50,15 @@ fun TaskListRow(taskList: TaskList, navController: NavController) {
             )
         }
         Spacer(Modifier.weight(1f))
-        IconButton(onClick = { /*TODO*/ }) {
+        IconButton(onClick = {
+            navController.navigate("modifyTaskList/$taskListId")
+        }) {
             Icon(
                 imageVector = Icons.Rounded.Settings,
                 contentDescription = "Settings for task list",
             )
         }
-        IconButton(onClick = { /*TODO*/ }) {
+        IconButton(onClick = { navController.navigate("task/$userId/$taskListId") }) {
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowRight,
                 contentDescription = "Arrow to proceed to task list",

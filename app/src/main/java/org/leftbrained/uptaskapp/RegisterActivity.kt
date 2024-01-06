@@ -2,43 +2,26 @@ package org.leftbrained.uptaskapp
 
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.Clear
-import androidx.compose.material.icons.rounded.Email
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.classes.UptaskDb
 import org.leftbrained.uptaskapp.classes.User
+import org.leftbrained.uptaskapp.classes.connectToDb
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
 @Composable
 fun RegisterActivity(navController: NavController) {
+    connectToDb()
     var login by remember {
         mutableStateOf("")
     }
@@ -109,7 +92,7 @@ fun RegisterActivity(navController: NavController) {
             Button(onClick =
             {
                 if (login.isNotEmpty() && password.isNotEmpty()) {
-                    Database.connect("jdbc:h2:file:/data/data/org.leftbrained.uptaskapp/databases/uptask.db", driver = "org.h2.Driver")
+                    connectToDb()
                     transaction {
                         User.new { this.login = login; this.password = password }
                     }

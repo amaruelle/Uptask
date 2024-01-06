@@ -1,5 +1,7 @@
 package org.leftbrained.uptaskapp
 
+import android.app.Activity
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -8,19 +10,21 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.rounded.List
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.TaskListsViewmodel
-import org.leftbrained.uptaskapp.classes.User
+import org.leftbrained.uptaskapp.classes.*
 import org.leftbrained.uptaskapp.components.TaskListRow
 import org.leftbrained.uptaskapp.dialogs.AddTaskListDialog
 import org.leftbrained.uptaskapp.dialogs.SettingsDialog
@@ -28,26 +32,44 @@ import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskListActivity(userId: Int, navController: NavController) {
-    val user = transaction {
-        return@transaction User.findById(userId)
-    }
-    if (user == null) {
-        navController.navigate("auth")
-        return
-    }
-    val taskListsViewmodel = TaskListsViewmodel()
+fun TaskListActivity(userId: Int, navController: NavController, vm: DatabaseStateViewmodel = viewModel()) {
+    connectToDb()
     var showAddDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showFilter by remember { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
+    val activity = LocalContext.current as Activity
+    val sharedPref = activity.getPreferences(Context.MODE_PRIVATE)
+    val taskLists by remember(vm.databaseState) {
+        derivedStateOf {
+            transaction {
+                TaskList.find { UptaskDb.TaskLists.userId eq userId }.toList()
+            }
+        }
+    }
     Scaffold(topBar = {
         TopAppBar(
             title = {
                 Column {
                     Text("Uptask", style = MaterialTheme.typography.titleLarge)
                     Text(text = "Task Lists", style = MaterialTheme.typography.labelMedium)
+                }
+            },
+            navigationIcon = {
+                IconButton(
+                    onClick = {
+                        navController.navigate("auth")
+                        with(sharedPref.edit()) {
+                            putString("user", "")
+                            apply()
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.KeyboardArrowLeft,
+                        contentDescription = "Back icon"
+                    )
                 }
             },
             actions = {
@@ -105,8 +127,8 @@ fun TaskListActivity(userId: Int, navController: NavController) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            taskListsViewmodel.getTaskLists(userId).forEach {
-                TaskListRow(it, navController)
+            taskLists.forEach {
+                TaskListRow(it, navController, userId)
             }
             if (showAddDialog) {
                 AddTaskListDialog(onDismissRequest = { showAddDialog = false }, userId)

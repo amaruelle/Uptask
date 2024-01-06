@@ -21,12 +21,10 @@ import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import kotlinx.datetime.toLocalDate
+import kotlinx.datetime.*
+import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.TaskList
-import org.leftbrained.uptaskapp.classes.User
-import org.leftbrained.uptaskapp.classes.UserTask
-import org.leftbrained.uptaskapp.classes.connectToDb
+import org.leftbrained.uptaskapp.classes.*
 import org.leftbrained.uptaskapp.components.UnorderedList
 import org.leftbrained.uptaskapp.nav.GeneralNav
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
@@ -49,6 +47,40 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun WelcomeScreen(navController: NavController) {
+    connectToDb()
+//    transaction {
+//        if (User.findById(1) == null) {
+//            User.new {
+//                login = "testLogin"
+//                password = "testPassword"
+//            }
+//        }
+//    }
+//    transaction {
+//        if (TaskList.findById(1) == null) {
+//            TaskList.new {
+//                userId = User.findById(1)!!
+//                name = "testList"
+//                emoji = "testEmoji"
+//            }
+//        }
+//    }
+    transaction {
+//        val currentMoment: Instant = Clock.System.now()
+//        val datetimeInSystemZone: LocalDateTime = currentMoment.toLocalDateTime(TimeZone.currentSystemDefault())
+//        val localDate = datetimeInSystemZone.date
+//        if (UserTask.findById(1) == null) {
+//            UserTask.new {
+//                userId = User.findById(1)!!
+//                taskListId = TaskList.findById(1)!!
+//                task = "testTask"
+//                description = "testDescription"
+//                dueDate = localDate
+//                isDone = false
+//                priority = 3
+//            }
+//        }
+    }
     Column(
         Modifier.padding(horizontal = 24.dp, vertical = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally

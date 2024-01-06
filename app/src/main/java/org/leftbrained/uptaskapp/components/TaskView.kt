@@ -8,21 +8,31 @@ import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import org.leftbrained.uptaskapp.classes.TagsViewmodel
-import org.leftbrained.uptaskapp.viewmodel.TaskViewModel
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.classes.DatabaseStateViewmodel
+import org.leftbrained.uptaskapp.classes.Tag
+import org.leftbrained.uptaskapp.classes.UptaskDb
+import org.leftbrained.uptaskapp.classes.UserTask
 
 @Composable
-fun TaskView(navController: NavController, taskId: Int) {
-    val vm: TaskViewModel = viewModel()
-
-    val task = vm.getTaskById(taskId)
-    val taskTags = TagsViewmodel().getTags(taskId)
+fun TaskView(navController: NavController, taskId: Int, vm: DatabaseStateViewmodel = viewModel()) {
+    val task = remember { transaction { UserTask.find(UptaskDb.UserTasks.id eq taskId).elementAt(0) } }
+    val taskTags = remember { transaction { Tag.find { UptaskDb.TaskTags.taskId eq taskId }.toList() } }
+    LaunchedEffect(task.isDone) {
+        if (task.isDone) {
+            transaction { task.delete() }
+            vm.databaseState++
+        }
+    }
     Row(
         Modifier
             .padding(12.dp)
@@ -32,7 +42,8 @@ fun TaskView(navController: NavController, taskId: Int) {
             .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
     ) {
         Checkbox(checked = task.isDone, onCheckedChange = {
-            task.isDone = !task.isDone
+            transaction { task.isDone = !task.isDone }
+            vm.databaseState++
         })
         Column(Modifier.padding(12.dp)) {
             Text(

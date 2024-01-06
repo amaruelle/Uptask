@@ -2,6 +2,8 @@ package org.leftbrained.uptaskapp.dialogs
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -12,13 +14,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.classes.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.classes.TaskList
-import org.leftbrained.uptaskapp.classes.User
-import org.leftbrained.uptaskapp.classes.connectToDb
+import org.leftbrained.uptaskapp.classes.UptaskDb
 
 @Composable
-fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseStateViewmodel = viewModel()) {
-    var name by remember { mutableStateOf("") }
-    var emoji by remember { mutableStateOf("") }
+fun ModifyTaskListDialog(onDismissRequest: () -> Unit, taskListId: Int, vm: DatabaseStateViewmodel = viewModel()) {
+    val taskList by remember(vm.databaseState) {
+        derivedStateOf {
+            transaction {
+                TaskList.find { UptaskDb.TaskLists.id eq taskListId }.elementAt(0)
+            }
+        }
+    }
+    var name by remember { mutableStateOf(taskList.name) }
+    var emoji by remember { mutableStateOf(taskList.emoji) }
+
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier
@@ -28,7 +37,7 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
         ) {
             Column(Modifier.padding(16.dp)) {
                 Text(
-                    text = "Add Task List",
+                    text = "Modify Task List",
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier
                         .padding(bottom = 16.dp)
@@ -36,7 +45,7 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Enter values for new task list",
+                    text = "Please enter values for modified task list",
                     modifier = Modifier
                         .fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -60,20 +69,35 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
                         .padding(top = 16.dp)
                 ) {
                     Button(onClick = {
-                        connectToDb()
                         transaction {
-                            TaskList.new { this.name = name; this.emoji = emoji; this.userId = User.findById(userId)!! }
+                            taskList.name = name
+                            taskList.emoji = emoji
                         }
                         vm.databaseState++
                         onDismissRequest()
                     }, modifier = Modifier.weight(1f)) {
-                        Text(text = "Add")
+                        Text(text = "Modify")
                     }
                     OutlinedButton(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(text = "Cancel")
+                    }
+                    IconButton(
+                        onClick = {
+                            transaction {
+                                taskList.delete()
+                            }
+                            onDismissRequest()
+                            vm.databaseState++
+                        },
+                        modifier = Modifier.width(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Delete,
+                            contentDescription = "Delete"
+                        )
                     }
                 }
             }

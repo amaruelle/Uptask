@@ -3,13 +3,10 @@ package org.leftbrained.uptaskapp.classes
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class TasksViewmodel {
-    fun getTasks(taskListId: Int): List<UserTask> {
-        transaction {
-            return@transaction UserTask.find {
-                UptaskDb.UserTasks.taskListId eq taskListId
-            }.toList<UserTask>()
-        }
-        return emptyList()
+    fun getTasks(taskListId: Int): List<UserTask> = transaction {
+        UserTask.find {
+            UptaskDb.UserTasks.taskListId eq taskListId
+        }.toList()
     }
 
     fun addTask(task: UserTask) {
@@ -26,16 +23,11 @@ class TasksViewmodel {
         }
     }
 
-    fun getTask(taskId: Int): UserTask? {
-        transaction {
-            return@transaction UserTask.find { UptaskDb.UserTasks.id eq taskId }.firstOrNull()
-        }
-        return null
+    fun getTask(taskId: Int): UserTask? = transaction {
+        UserTask.find { UptaskDb.UserTasks.id eq taskId }.firstOrNull()
     }
 
-    fun deleteTask(taskId: Int) {
-        transaction {
-            UserTask.find { UptaskDb.UserTasks.id eq taskId }.firstOrNull()?.delete()
-        }
+    fun deleteTask(taskId: Int) = transaction {
+        UserTask.find { UptaskDb.UserTasks.id eq taskId }.firstOrNull()?.delete()
     }
 }

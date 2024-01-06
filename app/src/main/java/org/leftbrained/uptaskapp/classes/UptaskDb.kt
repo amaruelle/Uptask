@@ -5,6 +5,7 @@ import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.kotlin.datetime.date
 
 class UptaskDb {
@@ -14,8 +15,8 @@ class UptaskDb {
     }
 
     object UserTasks: IntIdTable() {
-        val userId = reference("userId", Users)
-        val taskListId = reference("taskListId", TaskLists)
+        val userId = reference("userId", Users, onDelete = ReferenceOption.CASCADE)
+        val taskListId = reference("taskListId", TaskLists, onDelete = ReferenceOption.CASCADE)
         val task = varchar("task", 50)
         val description = varchar("description", 450)
         val dueDate = date("dueDate")
@@ -24,12 +25,12 @@ class UptaskDb {
     }
 
     object TaskTags: IntIdTable() {
-        val taskId = reference("taskId", UserTasks)
+        val taskId = reference("taskId", UserTasks, onDelete = ReferenceOption.CASCADE).nullable()
         val tag = varchar("tag", 50)
     }
 
     object TaskLists: IntIdTable() {
-        val userId = reference("userId", Users)
+        val userId = reference("userId", Users, onDelete = ReferenceOption.CASCADE)
         val name = varchar("name", 50)
         val emoji = varchar("emoji", 50)
     }
@@ -57,7 +58,7 @@ class UserTask(id: EntityID<Int>) : IntEntity(id) {
 class Tag(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<Tag>(UptaskDb.TaskTags)
 
-    var taskId by UserTask referencedOn UptaskDb.TaskTags.taskId
+    var taskId by UserTask optionalReferencedOn UptaskDb.TaskTags.taskId
     var tag by UptaskDb.TaskTags.tag
 }
 
