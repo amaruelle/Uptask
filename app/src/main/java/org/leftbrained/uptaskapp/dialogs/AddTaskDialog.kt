@@ -9,6 +9,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -18,6 +19,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.R
 import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.db.Tag
 import org.leftbrained.uptaskapp.db.TaskList
@@ -52,7 +54,7 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
         ) {
             Column(Modifier.padding(16.dp)) {
                 Text(
-                    text = "Add Task",
+                    text = stringResource(R.string.add_task),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier
                         .padding(bottom = 16.dp)
@@ -60,7 +62,7 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Enter values for new task",
+                    text = stringResource(R.string.enter_values_for_new_task),
                     modifier = Modifier
                         .fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -68,25 +70,25 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") },
+                    label = { Text(stringResource(R.string.name)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 OutlinedTextField(
                     value = desc,
                     onValueChange = { desc = it },
-                    label = { Text("Description") },
+                    label = { Text(stringResource(R.string.description)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 OutlinedTextField(
                     value = priority.toString(),
                     onValueChange = { priority = if (it == "") 0 else it.toInt() },
-                    label = { Text("Priority") },
+                    label = { Text(stringResource(R.string.priority)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 OutlinedTextField(
                     value = dueDate,
                     onValueChange = { dueDate = it },
-                    label = { Text("Due Date") },
+                    label = { Text(stringResource(R.string.due_date)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 LazyRow {
@@ -110,7 +112,7 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp),
-                    label = { Text("Tag") }, trailingIcon = {
+                    label = { Text(stringResource(R.string.tag)) }, trailingIcon = {
                         IconButton(onClick = {
                             transaction {
                                 val newTag = Tag.new {
@@ -154,13 +156,13 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                         }
                         onDismissRequest()
                     }, modifier = Modifier.weight(1f)) {
-                        Text(text = "Add")
+                        Text(text = stringResource(R.string.add))
                     }
                     OutlinedButton(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(text = "Cancel")
+                        Text(text = stringResource(R.string.cancel))
                     }
                 }
             }

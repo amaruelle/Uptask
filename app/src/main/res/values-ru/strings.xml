@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome">Добро пожаловать в Uptask</string>
+    <string name="organize_your_tasks">Организуйте свои задачи</string>
+    <string name="get_started">Начать</string>
+    <string name="what_you_can_do">Вот что вы можете делать с Uptask:</string>
+    <string name="create_edit_remove_task_lists">Добавлять/удалять и изменять списки задач</string>
+    <string name="add_delete_edit_tasks_from_your_lists">Добавлять/удалять и изменять сами задачи</string>
+    <string name="add_tags_and_due_dates">Управлять тегами и сроками</string>
+    <string name="don_t_have_an_account">Нет аккаунта?</string>
+    <string name="sign_up">Зарегистрироваться</string>
+    <string name="sign_in">Войти</string>
+    <string name="incorrect_password">Неверный пароль</string>
+    <string name="user_with_this_login">Пользователя с таким логином не существует</string>
+    <string name="please_fill_all_fields">Заполните все поля</string>
+    <string name="password">Пароль</string>
+    <string name="login">Логин</string>
+    <string name="sign_in_to_your_account">Войдите в свой аккаунт</string>
+    <string name="want_to_sign_in_instead">Хотите войти?</string>
+    <string name="sign_up_to_continue">Пройдите регистрацию, чтобы продолжить</string>
+    <string name="search">Поиск</string>
+    <string name="task_lists">Списки задач</string>
+    <string name="settings">Настройки</string>
+    <string name="theme">Тема</string>
+    <string name="there_is_nothing">Здесь пока ничего нет. Но скоро будет!</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отменить</string>
+    <string name="modify">Изменить</string>
+    <string name="emoji">Эмодзи</string>
+    <string name="name">Название</string>
+    <string name="please_enter_values_task_list">Введите значения для списка задач</string>
+    <string name="modify_task_list">Изменить список задач</string>
+    <string name="tag">Тег</string>
+    <string name="due_date">Дедлайн</string>
+    <string name="priority">Приоритет</string>
+    <string name="description">Описание</string>
+    <string name="please_enter_values_task">Введите значения для задачи</string>
+    <string name="modify_task">Изменить задачу</string>
+    <string name="add">Добавить</string>
+    <string name="enter_values_task_list">Заполните поля списка задач</string>
+    <string name="add_task_list">Добавить список задач</string>
+    <string name="filter_and_sort">Фильтрация и сортировка</string>
+    <string name="sort_by">Отсортировать по</string>
+    <string name="date_or_emoji">UptaskApp</string>
+    <string name="enter_values_for_new_task">Введите поля новой задачи</string>
+    <string name="add_task">Добавить задачу</string>
+</resources>

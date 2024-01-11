@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">UptaskApp</string>
+    <string name="app_name" translatable="false">Uptask</string>
     <string name="welcome">Welcome to Uptask</string>
     <string name="organize_your_tasks">Organize your tasks</string>
     <string name="get_started">Get Started</string>
@@ -42,4 +42,6 @@
     <string name="filter_and_sort">Filter and sort</string>
     <string name="sort_by">Sort by</string>
     <string name="date_or_emoji">Date or Emoji</string>
+    <string name="enter_values_for_new_task">Enter values for new task</string>
+    <string name="add_task">Add Task</string>
 </resources>
