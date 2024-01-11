@@ -1,4 +1,4 @@
-package org.leftbrained.uptaskapp.classes
+package org.leftbrained.uptaskapp.db
 
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass

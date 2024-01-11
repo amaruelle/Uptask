@@ -10,13 +10,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.UptaskDb
-import org.leftbrained.uptaskapp.classes.User
-import org.leftbrained.uptaskapp.classes.connectToDb
+import org.leftbrained.uptaskapp.db.UptaskDb
+import org.leftbrained.uptaskapp.db.User
+import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
 @Composable
@@ -53,7 +54,7 @@ fun RegisterActivity(navController: NavController) {
                 tint = MaterialTheme.colorScheme.primary
             )
             Text(
-                "Sign up to continue",
+                stringResource(R.string.sign_up_to_continue),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -70,7 +71,7 @@ fun RegisterActivity(navController: NavController) {
                     login = it
                     isClearedLogin = it.isNotEmpty()
                 },
-                label = { Text("Login") },
+                label = { Text(stringResource(R.string.login)) },
                 maxLines = 1
             )
             OutlinedTextField(
@@ -86,7 +87,7 @@ fun RegisterActivity(navController: NavController) {
                     password = it
                     isClearedPassword = it.isNotEmpty()
                 },
-                label = { Text("Password") },
+                label = { Text(stringResource(R.string.password)) },
                 maxLines = 1
             )
             Button(onClick =
@@ -107,22 +108,22 @@ fun RegisterActivity(navController: NavController) {
                     }
                     navController.navigate("taskList/${userId}")
                 } else {
-                    Toast.makeText(context, "Fill all fields", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.please_fill_all_fields), Toast.LENGTH_SHORT).show()
                 }
             }
             ) {
-                Text(text = "Sign up")
+                Text(text = stringResource(R.string.sign_up))
                 Spacer(Modifier.size(8.dp))
                 Icon(Icons.Rounded.ArrowForward, "Arrow forward icon")
             }
             Text(
-                "Want to sign in instead?",
+                stringResource(R.string.want_to_sign_in_instead),
                 style = MaterialTheme.typography.bodyMedium
             )
             TextButton(onClick = {
                 navController.navigate("auth")
             }) {
-                Text(text = "Sign in")
+                Text(text = stringResource(R.string.sign_in))
             }
         }
     }

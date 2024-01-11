@@ -12,14 +12,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.UptaskDb
-import org.leftbrained.uptaskapp.classes.User
-import org.leftbrained.uptaskapp.classes.connectToDb
+import org.leftbrained.uptaskapp.db.UptaskDb
+import org.leftbrained.uptaskapp.db.User
+import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
 fun Context.findActivity(): Activity {
@@ -64,7 +65,7 @@ fun AuthActivity(navController: NavController) {
                 tint = MaterialTheme.colorScheme.primary
             )
             Text(
-                "Sign in to your account",
+                stringResource(R.string.sign_in_to_your_account),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -81,7 +82,7 @@ fun AuthActivity(navController: NavController) {
                     login = it
                     isClearedLogin = it.isNotEmpty()
                 },
-                label = { Text("Login") },
+                label = { Text(stringResource(R.string.login)) },
                 maxLines = 1
             )
             OutlinedTextField(
@@ -97,14 +98,14 @@ fun AuthActivity(navController: NavController) {
                     password = it
                     isClearedPassword = it.isNotEmpty()
                 },
-                label = { Text("Password") },
+                label = { Text(stringResource(R.string.password)) },
                 maxLines = 1
             )
             Button(onClick = {
                 if (login == "" || password == "") {
                     Toast.makeText(
                         activity,
-                        "Please fill all fields",
+                        context.getString(R.string.please_fill_all_fields),
                         Toast.LENGTH_SHORT
                     ).show()
                     return@Button
@@ -114,7 +115,7 @@ fun AuthActivity(navController: NavController) {
                 if (user == null) {
                     Toast.makeText(
                         activity,
-                        "User with this login doesn't exist",
+                        context.getString(R.string.user_with_this_login),
                         Toast.LENGTH_SHORT
                     ).show()
                     return@Button
@@ -122,7 +123,7 @@ fun AuthActivity(navController: NavController) {
                 if (user.password != password) {
                     Toast.makeText(
                         activity,
-                        "Incorrect password",
+                        context.getString(R.string.incorrect_password),
                         Toast.LENGTH_SHORT
                     ).show()
                     return@Button
@@ -135,18 +136,18 @@ fun AuthActivity(navController: NavController) {
                 val userId = transaction { user.id.value }
                 navController.navigate("taskList/$userId")
             }) {
-                Text(text = "Sign in")
+                Text(text = stringResource(R.string.sign_in))
                 Spacer(Modifier.size(8.dp))
                 Icon(Icons.Rounded.ArrowForward, "Arrow forward icon")
             }
             Text(
-                "Don't have an account?",
+                text = stringResource(R.string.don_t_have_an_account),
                 style = MaterialTheme.typography.bodyMedium
             )
             TextButton(onClick = {
                 navController.navigate("register")
             }) {
-                Text(text = "Sign up")
+                Text(text = stringResource(R.string.sign_up))
             }
         }
     }

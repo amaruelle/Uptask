@@ -1,6 +1,8 @@
 package org.leftbrained.uptaskapp.classes
 
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.db.UptaskDb
+import org.leftbrained.uptaskapp.db.User
 
 class UsersViewmodel {
     fun getUser(login: String): User? = transaction {

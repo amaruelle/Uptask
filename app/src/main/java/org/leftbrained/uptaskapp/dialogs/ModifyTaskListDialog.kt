@@ -7,14 +7,16 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.DatabaseStateViewmodel
-import org.leftbrained.uptaskapp.classes.TaskList
-import org.leftbrained.uptaskapp.classes.UptaskDb
+import org.leftbrained.uptaskapp.R
+import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
+import org.leftbrained.uptaskapp.db.TaskList
+import org.leftbrained.uptaskapp.db.UptaskDb
 
 @Composable
 fun ModifyTaskListDialog(onDismissRequest: () -> Unit, taskListId: Int, vm: DatabaseStateViewmodel = viewModel()) {
@@ -37,7 +39,7 @@ fun ModifyTaskListDialog(onDismissRequest: () -> Unit, taskListId: Int, vm: Data
         ) {
             Column(Modifier.padding(16.dp)) {
                 Text(
-                    text = "Modify Task List",
+                    text = stringResource(R.string.modify_task_list),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier
                         .padding(bottom = 16.dp)
@@ -45,7 +47,7 @@ fun ModifyTaskListDialog(onDismissRequest: () -> Unit, taskListId: Int, vm: Data
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Please enter values for modified task list",
+                    text = stringResource(R.string.please_enter_values_task_list),
                     modifier = Modifier
                         .fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -53,13 +55,13 @@ fun ModifyTaskListDialog(onDismissRequest: () -> Unit, taskListId: Int, vm: Data
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") },
+                    label = { Text(stringResource(R.string.name)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 OutlinedTextField(
                     value = emoji,
                     onValueChange = { emoji = it },
-                    label = { Text("Emoji") },
+                    label = { Text(stringResource(R.string.emoji)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 Row(
@@ -76,13 +78,13 @@ fun ModifyTaskListDialog(onDismissRequest: () -> Unit, taskListId: Int, vm: Data
                         vm.databaseState++
                         onDismissRequest()
                     }, modifier = Modifier.weight(1f)) {
-                        Text(text = "Modify")
+                        Text(text = stringResource(R.string.modify))
                     }
                     OutlinedButton(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(text = "Cancel")
+                        Text(text = stringResource(R.string.cancel))
                     }
                     IconButton(
                         onClick = {

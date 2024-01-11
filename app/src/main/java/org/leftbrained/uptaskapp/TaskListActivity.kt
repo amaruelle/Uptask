@@ -9,26 +9,24 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.rounded.List
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.*
 import org.leftbrained.uptaskapp.components.TaskListRow
+import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
+import org.leftbrained.uptaskapp.db.TaskList
+import org.leftbrained.uptaskapp.db.UptaskDb
+import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.dialogs.AddTaskListDialog
-import org.leftbrained.uptaskapp.dialogs.FilterSortDialog
-import org.leftbrained.uptaskapp.dialogs.ModifyTaskListDialog
 import org.leftbrained.uptaskapp.dialogs.SettingsDialog
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
@@ -58,7 +56,7 @@ fun TaskListActivity(userId: Int, navController: NavController, vm: DatabaseStat
             title = {
                 Column {
                     Text("Uptask", style = MaterialTheme.typography.titleLarge)
-                    Text(text = "Task Lists", style = MaterialTheme.typography.labelMedium)
+                    Text(text = stringResource(R.string.task_lists), style = MaterialTheme.typography.labelMedium)
                 }
             },
             navigationIcon = {
@@ -82,7 +80,7 @@ fun TaskListActivity(userId: Int, navController: NavController, vm: DatabaseStat
                     OutlinedTextField(
                         value = search,
                         onValueChange = { search = it },
-                        label = { Text("Search") },
+                        label = { Text(stringResource(R.string.search)) },
                         modifier = Modifier
                             .padding(end = 8.dp)
                             .width(150.dp),
@@ -121,7 +119,7 @@ fun TaskListActivity(userId: Int, navController: NavController, vm: DatabaseStat
                     containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                     elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                 ) {
-                    Icon(Icons.Filled.Add, "Add icon")
+                    Icon(Icons.Rounded.Add, "Add icon")
                 }
             }
         )
@@ -140,9 +138,6 @@ fun TaskListActivity(userId: Int, navController: NavController, vm: DatabaseStat
             }
             if (showSettings) {
                 SettingsDialog { showSettings = false }
-            }
-            if (showFilter) {
-                FilterSortDialog(onDismissRequest = { showFilter = false }, taskListId = null)
             }
         }
     }

@@ -5,7 +5,7 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.Assert.assertNotNull
 import org.junit.Test
-import org.leftbrained.uptaskapp.classes.*
+import org.leftbrained.uptaskapp.db.*
 
 class DbTest {
     @Test

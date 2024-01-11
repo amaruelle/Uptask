@@ -3,22 +3,24 @@ package org.leftbrained.uptaskapp.dialogs
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.datetime.LocalDate
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.DatabaseStateViewmodel
-import org.leftbrained.uptaskapp.classes.Tag
-import org.leftbrained.uptaskapp.classes.UptaskDb
-import org.leftbrained.uptaskapp.classes.UserTask
+import org.leftbrained.uptaskapp.R
+import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
+import org.leftbrained.uptaskapp.db.Tag
+import org.leftbrained.uptaskapp.db.UptaskDb
+import org.leftbrained.uptaskapp.db.UserTask
 
 @Composable
 fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStateViewmodel = viewModel()) {
@@ -28,6 +30,9 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
                 UserTask.find { UptaskDb.UserTasks.id eq taskId }.elementAt(0)
             }
         }
+    }
+    val tags = remember {
+        mutableListOf<Tag>()
     }
     var name by remember { mutableStateOf(task.task) }
     var desc by remember { mutableStateOf(task.description) }
@@ -52,7 +57,7 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
         ) {
             Column(Modifier.padding(16.dp)) {
                 Text(
-                    text = "Modify Task",
+                    text = stringResource(R.string.modify_task),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier
                         .padding(bottom = 16.dp)
@@ -60,7 +65,7 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Please enter values for modified task",
+                    text = stringResource(R.string.please_enter_values_task),
                     modifier = Modifier
                         .fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -68,25 +73,25 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") },
+                    label = { Text(stringResource(R.string.name)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 OutlinedTextField(
                     value = desc,
                     onValueChange = { desc = it },
-                    label = { Text("Description") },
+                    label = { Text(stringResource(R.string.description)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 OutlinedTextField(
                     value = priority.toString(),
                     onValueChange = { priority = if (it == "") 0 else it.toInt() },
-                    label = { Text("Priority") },
+                    label = { Text(stringResource(R.string.priority)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 OutlinedTextField(
                     value = dueDate,
                     onValueChange = { dueDate = it },
-                    label = { Text("Due Date") },
+                    label = { Text(stringResource(R.string.due_date)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -102,29 +107,32 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
                             modifier = Modifier.padding(end = 8.dp)
                         )
                     }
-                    OutlinedTextField(
-                        value = tagEnter,
-                        onValueChange = { tagEnter = it },
-                        modifier = Modifier
-                            .width(100.dp)
-                            .padding(top = 16.dp),
-                        label = { Text("Tags") })
-                    IconButton(onClick = {
-                        transaction {
-                            Tag.new {
-                                tag = tagEnter
-                                this.taskId = task
-                            }
-                        }
-                        tagEnter = ""
-                        vm.databaseState++
-                    }) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Add tag icon"
-                        )
-                    }
                 }
+                OutlinedTextField(
+                    maxLines = 1,
+                    value = tagEnter,
+                    onValueChange = { tagEnter = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    label = { Text(stringResource(R.string.tag)) }, trailingIcon = {
+                        IconButton(onClick = {
+                            transaction {
+                                val newTag = Tag.new {
+                                    tag = tagEnter
+                                    this.taskId = UserTask[taskId]
+                                }
+                                tags.add(newTag)
+                            }
+                            tagEnter = ""
+                            vm.databaseState++
+                        }) {
+                            Icon(
+                                imageVector = Icons.Rounded.Add,
+                                contentDescription = "Add tag icon"
+                            )
+                        }
+                    })
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
@@ -141,13 +149,13 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
                         vm.databaseState++
                         onDismissRequest()
                     }, modifier = Modifier.weight(1f)) {
-                        Text(text = "Modify")
+                        Text(text = stringResource(R.string.modify))
                     }
                     OutlinedButton(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(text = "Cancel")
+                        Text(text = stringResource(R.string.cancel))
                     }
                     IconButton(
                         onClick = {

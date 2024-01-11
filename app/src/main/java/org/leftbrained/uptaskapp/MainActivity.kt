@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,11 +22,9 @@ import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import kotlinx.datetime.*
-import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.*
 import org.leftbrained.uptaskapp.components.UnorderedList
+import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.nav.GeneralNav
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
@@ -103,13 +102,13 @@ fun WelcomeScreen(navController: NavController) {
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "Welcome to Uptask",
+                    text = stringResource(R.string.welcome),
                     style = MaterialTheme.typography.displaySmall,
                     fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Organize your tasks",
+                    text = stringResource(R.string.organize_your_tasks),
                     modifier = Modifier.padding(top = 8.dp),
                 )
                 Button(
@@ -122,20 +121,20 @@ fun WelcomeScreen(navController: NavController) {
                         imageVector = Icons.Rounded.PlayArrow,
                         contentDescription = "Play arrow icon"
                     )
-                    Text(text = "Get Started")
+                    Text(text = stringResource(R.string.get_started))
                 }
             }
         }
         Column(Modifier.padding(top = 48.dp)) {
             Text(
-                text = "Here's what you can do with Uptask",
+                text = stringResource(R.string.what_you_can_do),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold
             )
             Spacer(Modifier.size(24.dp))
-            UnorderedList("Create/edit/remove task lists")
-            UnorderedList("Add/delete/edit tasks from your lists")
-            UnorderedList("Add tags and due dates to your tasks")
+            UnorderedList(stringResource(R.string.create_edit_remove_task_lists))
+            UnorderedList(stringResource(R.string.add_delete_edit_tasks_from_your_lists))
+            UnorderedList(stringResource(R.string.add_tags_and_due_dates))
         }
     }
 }

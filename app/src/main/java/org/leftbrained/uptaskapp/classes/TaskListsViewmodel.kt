@@ -2,8 +2,10 @@ package org.leftbrained.uptaskapp.classes
 
 import androidx.lifecycle.ViewModel
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.db.TaskList
+import org.leftbrained.uptaskapp.db.UptaskDb
 
-class TaskListsViewmodel : ViewModel() {
+class TaskListsViewmodel {
     fun getTaskLists(userId: Int): List<TaskList> = transaction {
         TaskList.find { UptaskDb.TaskLists.userId eq userId }.toList()
     }

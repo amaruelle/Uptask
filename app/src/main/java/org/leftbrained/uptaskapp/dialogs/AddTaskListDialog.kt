@@ -5,15 +5,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.DatabaseStateViewmodel
-import org.leftbrained.uptaskapp.classes.TaskList
-import org.leftbrained.uptaskapp.classes.User
-import org.leftbrained.uptaskapp.classes.connectToDb
+import org.leftbrained.uptaskapp.R
+import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
+import org.leftbrained.uptaskapp.db.TaskList
+import org.leftbrained.uptaskapp.db.User
+import org.leftbrained.uptaskapp.db.connectToDb
 
 @Composable
 fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseStateViewmodel = viewModel()) {
@@ -28,7 +30,7 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
         ) {
             Column(Modifier.padding(16.dp)) {
                 Text(
-                    text = "Add Task List",
+                    text = stringResource(R.string.add_task_list),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier
                         .padding(bottom = 16.dp)
@@ -36,7 +38,7 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Enter values for new task list",
+                    text = stringResource(R.string.enter_values_task_list),
                     modifier = Modifier
                         .fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -44,13 +46,13 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") },
+                    label = { Text(stringResource(R.string.name)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 OutlinedTextField(
                     value = emoji,
                     onValueChange = { emoji = it },
-                    label = { Text("Emoji") },
+                    label = { Text(stringResource(R.string.emoji)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 Row(
@@ -67,13 +69,13 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
                         vm.databaseState++
                         onDismissRequest()
                     }, modifier = Modifier.weight(1f)) {
-                        Text(text = "Add")
+                        Text(text = stringResource(R.string.add))
                     }
                     OutlinedButton(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(text = "Cancel")
+                        Text(text = stringResource(R.string.cancel))
                     }
                 }
             }

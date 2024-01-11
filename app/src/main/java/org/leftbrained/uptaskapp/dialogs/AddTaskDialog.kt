@@ -1,12 +1,13 @@
 package org.leftbrained.uptaskapp.dialogs
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -17,7 +18,10 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.*
+import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
+import org.leftbrained.uptaskapp.db.Tag
+import org.leftbrained.uptaskapp.db.TaskList
+import org.leftbrained.uptaskapp.db.UserTask
 
 @Composable
 fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: DatabaseStateViewmodel = viewModel()) {
@@ -29,11 +33,16 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
         )
     }
     val tags = remember {
-        mutableListOf<Pair<String, Int>>()
+        mutableListOf<Tag>()
     }
     var priority by remember { mutableIntStateOf(0) }
     var tagEnter by remember { mutableStateOf("") }
     val userId = transaction { taskList.userId }
+    val taskTags by remember(vm.databaseState) {
+        derivedStateOf {
+            listOf<Tag>()
+        }
+    }
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier
@@ -80,39 +89,45 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                     label = { Text("Due Date") },
                     modifier = Modifier.padding(top = 16.dp)
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    for (tag in tags) {
+                LazyRow {
+                    items(tags) { tag ->
                         AssistChip(
-                            label = { Text(text = tag.first) },
-                            onClick = { tags.remove(tag) },
+                            label = { Text(text = tag.tag) },
+                            onClick = {
+                                transaction {
+                                    tag.delete()
+                                }
+                                vm.databaseState++
+                            },
                             modifier = Modifier.padding(end = 8.dp)
                         )
                     }
-                    OutlinedTextField(
-                        value = tagEnter,
-                        onValueChange = { tagEnter = it },
-                        modifier = Modifier
-                            .width(100.dp)
-                            .padding(top = 16.dp),
-                        label = { Text("Tags") })
-                    IconButton(onClick = {
-                        transaction {
-                            val newTag = Tag.new {
-                                tag = tagEnter
-                                this.taskId = null
-                            }
-                            val newTagId = newTag.id.value
-                            tags.add((tagEnter to newTagId))
-                        }
-                        tagEnter = ""
-                        vm.databaseState++
-                    }) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Add tag icon"
-                        )
-                    }
                 }
+                OutlinedTextField(
+                    maxLines = 1,
+                    value = tagEnter,
+                    onValueChange = { tagEnter = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    label = { Text("Tag") }, trailingIcon = {
+                        IconButton(onClick = {
+                            transaction {
+                                val newTag = Tag.new {
+                                    tag = tagEnter
+                                    this.taskId = null
+                                }
+                                tags.add(newTag)
+                            }
+                            tagEnter = ""
+                            vm.databaseState++
+                        }) {
+                            Icon(
+                                imageVector = Icons.Rounded.Add,
+                                contentDescription = "Add tag icon"
+                            )
+                        }
+                    })
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
@@ -132,7 +147,7 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                             }
                             val newTaskId = UserTask.all().last()
                             for (tag in tags) {
-                                val newTag = Tag[tag.second]
+                                val newTag = Tag[tag.id.value]
                                 newTag.taskId = newTaskId
                             }
                             vm.databaseState++

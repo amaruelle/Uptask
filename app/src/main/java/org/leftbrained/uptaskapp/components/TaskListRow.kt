@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.TaskList
+import org.leftbrained.uptaskapp.db.TaskList
 
 @Composable
 fun TaskListRow(taskList: TaskList, navController: NavController, userId: Int) {

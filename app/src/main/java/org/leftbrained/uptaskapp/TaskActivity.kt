@@ -6,24 +6,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.rounded.List
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.classes.*
 import org.leftbrained.uptaskapp.components.TaskView
+import org.leftbrained.uptaskapp.db.*
 import org.leftbrained.uptaskapp.dialogs.AddTaskDialog
 import org.leftbrained.uptaskapp.dialogs.FilterSortDialog
 import org.leftbrained.uptaskapp.dialogs.SettingsDialog
@@ -49,28 +45,19 @@ fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStat
             }
         }
     }
-    val sortedTasks by remember(vm.databaseState) {
+    val final by remember(vm.databaseState) {
         derivedStateOf {
             when (vm.sortingCriteria) {
                 SortingCriteria.Name -> {
-                    transaction {
-                        UptaskDb.UserTasks.selectAll()
-                            .orderBy(UptaskDb.UserTasks.columns.find { it.name == "TASK" }!! to SortOrder.ASC)
-                    }
+                    tasks.sortedBy { it.task }
                 }
 
                 SortingCriteria.Date -> {
-                    transaction {
-                        UptaskDb.UserTasks.selectAll()
-                            .orderBy(UptaskDb.UserTasks.columns.find { it.name == "dueDate" }!! to SortOrder.ASC)
-                    }
+                    tasks.sortedBy { it.dueDate }
                 }
 
                 SortingCriteria.Priority -> {
-                    transaction {
-                        UptaskDb.UserTasks.selectAll()
-                            .orderBy(UptaskDb.UserTasks.columns.find { it.name == "PRIORITY" }!! to SortOrder.ASC)
-                    }
+                    tasks.sortedBy { it.priority }
                 }
 
                 else -> tasks
@@ -102,7 +89,7 @@ fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStat
                 OutlinedTextField(
                     value = search,
                     onValueChange = { search = it },
-                    label = { Text("Search") },
+                    label = { Text(stringResource(R.string.search)) },
                     modifier = Modifier
                         .padding(end = 8.dp)
                         .width(150.dp),
@@ -136,7 +123,7 @@ fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStat
                 containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                 elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
             ) {
-                Icon(Icons.Filled.Add, "Add icon")
+                Icon(Icons.Rounded.Add, "Add icon")
             }
         })
     }) { innerPadding ->
@@ -145,7 +132,7 @@ fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStat
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            for (task in tasks) {
+            for (task in final) {
                 val taskId = transaction {
                     task.id.value
                 }
@@ -158,7 +145,7 @@ fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStat
                 AddTaskDialog(onDismissRequest = { showAddTask = false }, taskList!!)
             }
             if (showFilter) {
-                FilterSortDialog(onDismissRequest = { showFilter = false }, vm, taskListId)
+                FilterSortDialog(onDismissRequest = { showFilter = false })
             }
         }
     }

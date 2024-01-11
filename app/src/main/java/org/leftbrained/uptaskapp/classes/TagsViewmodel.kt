@@ -1,9 +1,10 @@
 package org.leftbrained.uptaskapp.classes
 
-import androidx.lifecycle.ViewModel
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.db.Tag
+import org.leftbrained.uptaskapp.db.UptaskDb
 
-class TagsViewmodel : ViewModel() {
+class TagsViewmodel {
     fun getTags(taskId: Int): List<Tag> = transaction {
         Tag.find { UptaskDb.TaskTags.taskId eq taskId }.toList()
     }

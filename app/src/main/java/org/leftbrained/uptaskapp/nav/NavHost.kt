@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,8 +15,8 @@ import androidx.navigation.navArgument
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.*
-import org.leftbrained.uptaskapp.classes.UptaskDb
-import org.leftbrained.uptaskapp.classes.connectToDb
+import org.leftbrained.uptaskapp.db.UptaskDb
+import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.dialogs.ModifyTaskDialog
 import org.leftbrained.uptaskapp.dialogs.ModifyTaskListDialog
 
