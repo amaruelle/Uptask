@@ -6,28 +6,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.classes.*
 
 @Composable
 fun FilterSortDialog(
     onDismissRequest: () -> Unit,
+    vm: DatabaseStateViewmodel = viewModel(),
     taskListId: Int? = null
 ) {
     var sortName by remember { mutableStateOf(false) }
@@ -37,6 +33,43 @@ fun FilterSortDialog(
     val taskListsViewmodel = remember { TaskListsViewmodel() }
     val tasksViewmodel = remember { TasksViewmodel() }
     val taskList = remember { taskListId?.let { taskListsViewmodel.getTaskList(it) } }
+    val tasks by remember { mutableStateOf(TasksViewmodel().getTasks(taskListId!!)) }
+    val sortedTasks = if (sortName) {
+        transaction {
+            UptaskDb.UserTasks.selectAll()
+                .orderBy(UptaskDb.UserTasks.columns.find { it.name == "TASK" }!! to SortOrder.ASC)
+        }
+    } else if (sortDate) {
+        transaction {
+            UptaskDb.UserTasks.selectAll()
+                .orderBy(UptaskDb.UserTasks.columns.find { it.name == "dueDate" }!! to SortOrder.ASC)
+        }
+    } else if (sortPriority) {
+        transaction {
+            UptaskDb.UserTasks.selectAll()
+                .orderBy(UptaskDb.UserTasks.columns.find { it.name == "PRIORITY" }!! to SortOrder.ASC)
+        }
+    } else tasks
+    LaunchedEffect(
+        sortName,
+        sortDate,
+        sortPriority
+    ) {
+        if (sortName) {
+            vm.sortingCriteria = SortingCriteria.Name
+            vm.databaseState++
+        } else if (sortDate) {
+            vm.sortingCriteria = SortingCriteria.Date
+            vm.databaseState++
+        } else if (sortPriority) {
+            vm.sortingCriteria = SortingCriteria.Priority
+            vm.databaseState++
+        } else {
+            vm.sortingCriteria = SortingCriteria.None
+            vm.databaseState++
+        }
+    }
+
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(shape = RoundedCornerShape(16.dp)) {
             Column(Modifier.padding(16.dp)) {
@@ -72,34 +105,8 @@ fun FilterSortDialog(
                         label = { Text("Search") })
                 }
                 Button(onClick = {
-                    if (taskList != null) {
-                        if (sortName) {
-                            if (taskListId != null) {
-                                tasksViewmodel.getTasks(taskListId).sortedBy { it.task }
-                            }
-                        }
-                        if (sortDate) {
-                            if (taskListId != null) {
-                                tasksViewmodel.getTasks(taskListId).sortedBy { it.dueDate }
-                            }
-                        }
-                        if (sortPriority) {
-                            if (taskListId != null) {
-                                tasksViewmodel.getTasks(taskListId).sortedBy { it.priority }
-                            }
-                        }
-                    }
-                    if (taskListId != null) {
-                        if (sortName) {
-                            TasksViewmodel().getTasks(taskListId).sortedBy { it.task }
-                        }
-                        if (sortDate) {
-                            TasksViewmodel().getTasks(taskListId).sortedBy { it.dueDate }
-                        }
-                        if (sortPriority) {
-                            TasksViewmodel().getTasks(taskListId).sortedBy { it.priority }
-                        }
-                    }
+                    // Callback
+                    onDismissRequest()
                 }) {
                     Text("Apply")
                 }

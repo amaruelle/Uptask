@@ -8,4 +8,5 @@ import androidx.lifecycle.ViewModel
 
 class DatabaseStateViewmodel: ViewModel() {
     var databaseState by mutableIntStateOf(1)
+    var sortingCriteria by mutableStateOf(SortingCriteria.None)
 }

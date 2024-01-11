@@ -27,6 +27,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.classes.*
 import org.leftbrained.uptaskapp.components.TaskListRow
 import org.leftbrained.uptaskapp.dialogs.AddTaskListDialog
+import org.leftbrained.uptaskapp.dialogs.FilterSortDialog
+import org.leftbrained.uptaskapp.dialogs.ModifyTaskListDialog
 import org.leftbrained.uptaskapp.dialogs.SettingsDialog
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
@@ -34,6 +36,9 @@ import org.leftbrained.uptaskapp.ui.theme.AppTheme
 @Composable
 fun TaskListActivity(userId: Int, navController: NavController, vm: DatabaseStateViewmodel = viewModel()) {
     connectToDb()
+    LaunchedEffect(null) {
+        println(userId)
+    }
     var showAddDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showFilter by remember { mutableStateOf(false) }
@@ -61,7 +66,7 @@ fun TaskListActivity(userId: Int, navController: NavController, vm: DatabaseStat
                     onClick = {
                         navController.navigate("auth")
                         with(sharedPref.edit()) {
-                            putString("user", "")
+                            putString("user", "0")
                             apply()
                         }
                     }
@@ -135,6 +140,9 @@ fun TaskListActivity(userId: Int, navController: NavController, vm: DatabaseStat
             }
             if (showSettings) {
                 SettingsDialog { showSettings = false }
+            }
+            if (showFilter) {
+                FilterSortDialog(onDismissRequest = { showFilter = false }, taskListId = null)
             }
         }
     }

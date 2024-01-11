@@ -19,10 +19,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.classes.*
 import org.leftbrained.uptaskapp.components.TaskView
 import org.leftbrained.uptaskapp.dialogs.AddTaskDialog
+import org.leftbrained.uptaskapp.dialogs.FilterSortDialog
 import org.leftbrained.uptaskapp.dialogs.SettingsDialog
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
@@ -46,6 +49,35 @@ fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStat
             }
         }
     }
+    val sortedTasks by remember(vm.databaseState) {
+        derivedStateOf {
+            when (vm.sortingCriteria) {
+                SortingCriteria.Name -> {
+                    transaction {
+                        UptaskDb.UserTasks.selectAll()
+                            .orderBy(UptaskDb.UserTasks.columns.find { it.name == "TASK" }!! to SortOrder.ASC)
+                    }
+                }
+
+                SortingCriteria.Date -> {
+                    transaction {
+                        UptaskDb.UserTasks.selectAll()
+                            .orderBy(UptaskDb.UserTasks.columns.find { it.name == "dueDate" }!! to SortOrder.ASC)
+                    }
+                }
+
+                SortingCriteria.Priority -> {
+                    transaction {
+                        UptaskDb.UserTasks.selectAll()
+                            .orderBy(UptaskDb.UserTasks.columns.find { it.name == "PRIORITY" }!! to SortOrder.ASC)
+                    }
+                }
+
+                else -> tasks
+            }
+        }
+    }
+
     Scaffold(topBar = {
         TopAppBar(title = {
             Column {
@@ -124,6 +156,9 @@ fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStat
             }
             if (showAddTask) {
                 AddTaskDialog(onDismissRequest = { showAddTask = false }, taskList!!)
+            }
+            if (showFilter) {
+                FilterSortDialog(onDismissRequest = { showFilter = false }, vm, taskListId)
             }
         }
     }
