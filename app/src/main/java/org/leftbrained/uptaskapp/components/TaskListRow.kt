@@ -34,7 +34,7 @@ fun TaskListRow(taskList: TaskList, navController: NavController, userId: Int) {
             )
             .fillMaxWidth()
             .clickable {
-                navController.navigate("task/$userId/$taskListId")
+                navController.navigate("task/$userId/$taskListId/0/none/false")
             }, verticalAlignment = Alignment.CenterVertically
     ) {
         Column(Modifier.padding(12.dp)) {
@@ -58,7 +58,7 @@ fun TaskListRow(taskList: TaskList, navController: NavController, userId: Int) {
                 contentDescription = "Settings for task list",
             )
         }
-        IconButton(onClick = { navController.navigate("task/$userId/$taskListId") }) {
+        IconButton(onClick = { navController.navigate("task/$userId/$taskListId/0/none/false") }) {
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowRight,
                 contentDescription = "Arrow to proceed to task list",

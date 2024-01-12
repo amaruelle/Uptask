@@ -44,4 +44,9 @@
     <string name="date_or_emoji">Date or Emoji</string>
     <string name="enter_values_for_new_task">Enter values for new task</string>
     <string name="add_task">Add Task</string>
+    <string name="filter_by">Filter by</string>
+    <string name="date_match">Date doesn\'t match the pattern</string>
+    <string name="invalid_parameters">Invalid parameters</string>
+    <string name="tag_empty">Tag can\'t be empty</string>
+    <string name="name_emoji_empty">Name or emoji can\'t be empty</string>
 </resources>

@@ -2,7 +2,6 @@ package org.leftbrained.uptaskapp
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -10,14 +9,13 @@ import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.*
 import org.leftbrained.uptaskapp.components.TaskView
 import org.leftbrained.uptaskapp.db.*
 import org.leftbrained.uptaskapp.dialogs.AddTaskDialog
@@ -27,12 +25,18 @@ import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStateViewmodel = viewModel(), userId: Int) {
+fun TaskActivity(
+    taskListId: Int,
+    navController: NavController,
+    vm: DatabaseStateViewmodel = viewModel(),
+    userId: Int,
+    sort: Int,
+    filter: String,
+    showDone: Boolean
+) {
     var showSettings by remember { mutableStateOf(false) }
     var showAddTask by remember { mutableStateOf(false) }
     var showFilter by remember { mutableStateOf(false) }
-    var showSearch by remember { mutableStateOf(false) }
-    var search by remember { mutableStateOf("") }
     val taskList = transaction {
         TaskList.find { UptaskDb.TaskLists.id eq taskListId }.firstOrNull()
     }
@@ -40,31 +44,24 @@ fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStat
         derivedStateOf {
             transaction {
                 UserTask.find {
-                    UptaskDb.UserTasks.taskListId eq taskListId
+                    (UptaskDb.UserTasks.taskListId eq taskListId) and
+                            (UptaskDb.UserTasks.isDone eq showDone)
+                }.orderBy(
+                    when (sort) {
+                        1 -> UptaskDb.UserTasks.task to SortOrder.ASC
+                        2 -> UptaskDb.UserTasks.priority to SortOrder.ASC
+                        3 -> UptaskDb.UserTasks.dueDate to SortOrder.ASC
+                        else -> UptaskDb.UserTasks.id to SortOrder.ASC
+                    }
+                ).filter {
+                    when (filter) {
+                        "none" -> it.task.contains("") || it.description.contains("")
+                        else -> it.task.contains(filter) || it.description.contains(filter)
+                    }
                 }.toList()
             }
         }
     }
-    val final by remember(vm.databaseState) {
-        derivedStateOf {
-            when (vm.sortingCriteria) {
-                SortingCriteria.Name -> {
-                    tasks.sortedBy { it.task }
-                }
-
-                SortingCriteria.Date -> {
-                    tasks.sortedBy { it.dueDate }
-                }
-
-                SortingCriteria.Priority -> {
-                    tasks.sortedBy { it.priority }
-                }
-
-                else -> tasks
-            }
-        }
-    }
-
     Scaffold(topBar = {
         TopAppBar(title = {
             Column {
@@ -85,22 +82,6 @@ fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStat
                 )
             }
         }, actions = {
-            if (showSearch) {
-                OutlinedTextField(
-                    value = search,
-                    onValueChange = { search = it },
-                    label = { Text(stringResource(R.string.search)) },
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .width(150.dp),
-                    maxLines = 1
-                )
-            }
-            IconButton(onClick = { showSearch = !showSearch }) {
-                Icon(
-                    imageVector = Icons.Rounded.Search, contentDescription = "Search icon"
-                )
-            }
             IconButton(onClick = { showFilter = !showFilter }) {
                 Icon(
                     imageVector = Icons.Rounded.List, contentDescription = "Filter icon"
@@ -115,6 +96,14 @@ fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStat
             IconButton(onClick = { showSettings = !showSettings }) {
                 Icon(
                     imageVector = Icons.Rounded.Settings, contentDescription = "Settings icon"
+                )
+            }
+            IconButton(onClick = {
+                navController.navigate("task/$userId/$taskListId/$sort/$filter/${!showDone}")
+            }) {
+                Icon(
+                    imageVector = Icons.Rounded.Done,
+                    contentDescription = "Done checkmark"
                 )
             }
         }, floatingActionButton = {
@@ -132,7 +121,7 @@ fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStat
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            for (task in final) {
+            for (task in tasks) {
                 val taskId = transaction {
                     task.id.value
                 }
@@ -145,7 +134,7 @@ fun TaskActivity(taskListId: Int, navController: NavController, vm: DatabaseStat
                 AddTaskDialog(onDismissRequest = { showAddTask = false }, taskList!!)
             }
             if (showFilter) {
-                FilterSortDialog(onDismissRequest = { showFilter = false })
+                FilterSortDialog(onDismissRequest = { showFilter = false }, navController, taskListId)
             }
         }
     }
@@ -157,6 +146,6 @@ fun TaskActivityPreview() {
     AppTheme {
         TaskActivity(TaskList.new {
             this.userId = User.findById(0)!!; this.emoji = "F"; this.name = "TaskList 1"
-        }.id.value, rememberNavController(), userId = 0)
+        }.id.value, rememberNavController(), userId = 0, sort = 0, filter = "", showDone = false)
     }
 }

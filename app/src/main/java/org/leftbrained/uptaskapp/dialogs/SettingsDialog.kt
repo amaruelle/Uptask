@@ -26,7 +26,11 @@ fun SettingsDialog(onDismissRequest: () -> Unit) {
                 Text(stringResource(R.string.settings), style = MaterialTheme.typography.titleLarge)
                 Spacer(modifier = Modifier.padding(8.dp))
                 Text(stringResource(R.string.theme), style = MaterialTheme.typography.titleMedium)
-                Text(stringResource(R.string.there_is_nothing), style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    stringResource(R.string.there_is_nothing),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
                 Button(onClick = { onDismissRequest() }) {
                     Text(stringResource(R.string.save))
                 }

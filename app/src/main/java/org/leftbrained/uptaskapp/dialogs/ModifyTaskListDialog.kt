@@ -1,5 +1,6 @@
 package org.leftbrained.uptaskapp.dialogs
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -7,6 +8,7 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -27,6 +29,7 @@ fun ModifyTaskListDialog(onDismissRequest: () -> Unit, taskListId: Int, vm: Data
             }
         }
     }
+    val context = LocalContext.current
     var name by remember { mutableStateOf(taskList.name) }
     var emoji by remember { mutableStateOf(taskList.emoji) }
 
@@ -71,6 +74,14 @@ fun ModifyTaskListDialog(onDismissRequest: () -> Unit, taskListId: Int, vm: Data
                         .padding(top = 16.dp)
                 ) {
                     Button(onClick = {
+                        if (name == "" || emoji == "") {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.name_emoji_empty),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
                         transaction {
                             taskList.name = name
                             taskList.emoji = emoji

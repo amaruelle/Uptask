@@ -21,27 +21,30 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.classes.SortingCriteria
 import org.leftbrained.uptaskapp.components.TaskListRow
 import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.db.TaskList
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.dialogs.AddTaskListDialog
+import org.leftbrained.uptaskapp.dialogs.FilterSortDialog
 import org.leftbrained.uptaskapp.dialogs.SettingsDialog
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaskListActivity(userId: Int, navController: NavController, vm: DatabaseStateViewmodel = viewModel()) {
+fun TaskListActivity(
+    userId: Int,
+    navController: NavController,
+    vm: DatabaseStateViewmodel = viewModel()
+) {
     connectToDb()
     LaunchedEffect(null) {
         println(userId)
     }
     var showAddDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
-    var showFilter by remember { mutableStateOf(false) }
-    var showSearch by remember { mutableStateOf(false) }
-    var search by remember { mutableStateOf("") }
     val activity = LocalContext.current as Activity
     val sharedPref = activity.getPreferences(Context.MODE_PRIVATE)
     val taskLists by remember(vm.databaseState) {
@@ -72,31 +75,6 @@ fun TaskListActivity(userId: Int, navController: NavController, vm: DatabaseStat
                     Icon(
                         imageVector = Icons.Rounded.KeyboardArrowLeft,
                         contentDescription = "Back icon"
-                    )
-                }
-            },
-            actions = {
-                if (showSearch) {
-                    OutlinedTextField(
-                        value = search,
-                        onValueChange = { search = it },
-                        label = { Text(stringResource(R.string.search)) },
-                        modifier = Modifier
-                            .padding(end = 8.dp)
-                            .width(150.dp),
-                        maxLines = 1
-                    )
-                }
-                IconButton(onClick = { showSearch = !showSearch }) {
-                    Icon(
-                        imageVector = Icons.Rounded.Search,
-                        contentDescription = "Search"
-                    )
-                }
-                IconButton(onClick = { showFilter = !showFilter }) {
-                    Icon(
-                        imageVector = Icons.Rounded.List,
-                        contentDescription = "Settings"
                     )
                 }
             }, colors = TopAppBarDefaults.largeTopAppBarColors(

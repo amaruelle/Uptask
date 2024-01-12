@@ -27,12 +27,6 @@ import org.leftbrained.uptaskapp.db.UserTask
 fun TaskView(navController: NavController, taskId: Int, vm: DatabaseStateViewmodel = viewModel()) {
     val task = remember { transaction { UserTask.find(UptaskDb.UserTasks.id eq taskId).elementAt(0) } }
     val taskTags = remember { transaction { Tag.find { UptaskDb.TaskTags.taskId eq taskId }.toList() } }
-    LaunchedEffect(task.isDone) {
-        if (task.isDone) {
-            transaction { task.delete() }
-            vm.databaseState++
-        }
-    }
     Row(
         Modifier
             .padding(12.dp)

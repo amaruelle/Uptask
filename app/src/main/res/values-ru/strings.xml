@@ -41,7 +41,12 @@
     <string name="add_task_list">Добавить список задач</string>
     <string name="filter_and_sort">Фильтрация и сортировка</string>
     <string name="sort_by">Отсортировать по</string>
-    <string name="date_or_emoji">UptaskApp</string>
+    <string name="date_or_emoji">Дата или эмодзи</string>
     <string name="enter_values_for_new_task">Введите поля новой задачи</string>
     <string name="add_task">Добавить задачу</string>
+    <string name="filter_by">Отфильтровать по</string>
+    <string name="date_match">Дата не соответствует формату</string>
+    <string name="invalid_parameters">Неверные параметры</string>
+    <string name="tag_empty">Тег не может быть пустым</string>
+    <string name="name_emoji_empty">Имя или эмодзи не может быть пустым</string>
 </resources>

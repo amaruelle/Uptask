@@ -1,10 +1,12 @@
 package org.leftbrained.uptaskapp.dialogs
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -21,6 +23,7 @@ import org.leftbrained.uptaskapp.db.connectToDb
 fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseStateViewmodel = viewModel()) {
     var name by remember { mutableStateOf("") }
     var emoji by remember { mutableStateOf("") }
+    val context = LocalContext.current
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier
@@ -62,6 +65,14 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
                         .padding(top = 16.dp)
                 ) {
                     Button(onClick = {
+                        if (name == "" || emoji == "") {
+                            Toast.makeText(
+                                context,
+                                "Name or emoji can't be empty",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
                         connectToDb()
                         transaction {
                             TaskList.new { this.name = name; this.emoji = emoji; this.userId = User.findById(userId)!! }

@@ -1,5 +1,6 @@
 package org.leftbrained.uptaskapp.dialogs
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -9,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,6 +36,7 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
     val tags = remember {
         mutableListOf<Tag>()
     }
+    val context = LocalContext.current
     var name by remember { mutableStateOf(task.task) }
     var desc by remember { mutableStateOf(task.description) }
     var dueDate = remember {
@@ -117,6 +120,14 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
                         .padding(top = 16.dp),
                     label = { Text(stringResource(R.string.tag)) }, trailingIcon = {
                         IconButton(onClick = {
+                            if (tagEnter == "") {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.tag_empty),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                return@IconButton
+                            }
                             transaction {
                                 val newTag = Tag.new {
                                     tag = tagEnter
@@ -140,6 +151,23 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
                         .padding(top = 16.dp)
                 ) {
                     Button(onClick = {
+                        val dateRegex = Regex("[0-9]{4}-[0-9]{2}-[0-9]{2}")
+                        if (!dueDate.matches(dateRegex)) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.date_match),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
+                        if (name == "" || desc == "" || !priority.toString().matches(Regex("[0-5]"))) {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.invalid_parameters),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
                         transaction {
                             task.task = name
                             task.description = desc

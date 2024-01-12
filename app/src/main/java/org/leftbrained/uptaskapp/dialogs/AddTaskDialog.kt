@@ -1,5 +1,6 @@
 package org.leftbrained.uptaskapp.dialogs
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -37,6 +39,7 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
     val tags = remember {
         mutableListOf<Tag>()
     }
+    val context = LocalContext.current
     var priority by remember { mutableIntStateOf(0) }
     var tagEnter by remember { mutableStateOf("") }
     val userId = transaction { taskList.userId }
@@ -114,6 +117,14 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                         .padding(top = 16.dp),
                     label = { Text(stringResource(R.string.tag)) }, trailingIcon = {
                         IconButton(onClick = {
+                            if (tagEnter == "") {
+                                Toast.makeText(
+                                    context,
+                                    "Tag can't be empty",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                return@IconButton
+                            }
                             transaction {
                                 val newTag = Tag.new {
                                     tag = tagEnter
@@ -137,6 +148,23 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                         .padding(top = 16.dp)
                 ) {
                     Button(onClick = {
+                        val dateRegex = Regex("[0-9]{4}-[0-9]{2}-[0-9]{2}")
+                        if (!dueDate.matches(dateRegex)) {
+                            Toast.makeText(
+                                context,
+                                "Date doesn't match the pattern",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
+                        if (name == "" || desc == "" || !priority.toString().matches(Regex("[0-5]"))) {
+                            Toast.makeText(
+                                context,
+                                "Invalid parameters",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
                         transaction {
                             UserTask.new {
                                 this.task = name

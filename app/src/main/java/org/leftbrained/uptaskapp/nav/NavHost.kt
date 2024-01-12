@@ -66,14 +66,19 @@ fun GeneralNav() {
             )
         }
         composable(
-            "task/{user}/{listId}",
+            "task/{user}/{listId}/{sort}/{filter}/{showDone}",
             arguments = listOf(navArgument("user") { type = NavType.IntType },
-                navArgument("listId") { type = NavType.IntType })
+                navArgument("listId") { type = NavType.IntType }, navArgument("sort") { type = NavType.IntType },
+                navArgument("filter") { type = NavType.StringType }, navArgument("showDone") { type = NavType.BoolType }
+            )
         ) {
             TaskActivity(
                 taskListId = it.arguments?.getInt("listId")!!,
                 navController = navController,
-                userId = it.arguments?.getInt("user")!!
+                userId = it.arguments?.getInt("user")!!,
+                sort = it.arguments?.getInt("sort")!!,
+                filter = it.arguments?.getString("filter")!!,
+                showDone = it.arguments?.getBoolean("showDone")!!
             )
         }
         dialog("modifyTask/{task}", arguments = listOf(navArgument("task") { type = NavType.IntType })) {
