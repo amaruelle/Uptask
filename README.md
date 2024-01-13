@@ -2,7 +2,7 @@
 
 # ☑️ uptask.
 
- Welcome to `uptask.`, intuitive **task management app** with Material You design!
+Welcome to `uptask.`, intuitive **task management app** with dynamic Material You design!
 
 ## Platforms
 
@@ -27,3 +27,4 @@ Data organization implemented through the `H2` engine and a framework `Exposed`.
 * Localization into more languages
 * Reminders, overdue visual difference
 * Optimization
+* Calendar integration
