@@ -25,6 +25,8 @@ Data organization implemented through the `H2` engine and a framework `Exposed`.
 
 * Profile editing tab (change password or login)
 * Localization into more languages
-* Reminders, overdue visual difference
+* Reminders, statistics
 * Optimization
 * Calendar integration
+
+[🇷🇺](README.md)
