@@ -1,30 +1,30 @@
-![Banner](img/banner.png)
+![Баннер](img/banner.png)
 
 # ☑️ uptask.
 
-Welcome to `uptask.`, intuitive **task management app** with dynamic Material You design!
+Добро пожаловать в `uptask.`, интуитивный **планировщик задач** с Material You дизайном!
 
-## Platforms
+## Платформы
 
-uptask is an Android app, written on `Kotlin + Jetpack Compose`. 
-Data organization implemented through the `H2` engine and a framework `Exposed`.
+uptask это Android приложение, написанное на `Kotlin + Jetpack Compose`. 
+Организация данных выполнена при помощи базы данных `H2` и фреймворка `Exposed`.
 
-## Features
+## Функции
 
-* Local accounts system (registration and authorization)
-* Projects or task lists (name and emoji)
-* Powerful task management (name, description, tags and priority, due dates)
-* Flexible sorting (by name, priority, due date)
-* Full-text search (description and name)
+* Локальная система аккаунтов (регистрация и авторизация)
+* Проекты или списки задач (название и эмодзи)
+* Комплексная структура задач (название, описание, теги и приоритет, дедлайны)
+* Гибкая сортировка (по имени, приоритету или дедлайну)
+* Полный поиск (описание и название задачи)
 
-## Screenshots
+## Скриншоты
 
-![Screenshots](img/screenshots.png)
+![Скриншоты](img/screenshots.png)
 
-## Roadmap
+## Дорожная карта
 
-* Profile editing tab (change password or login)
-* Localization into more languages
-* Reminders, overdue visual difference
-* Optimization
-* Calendar integration
+* Вкладка редактирования профиля (изменение пароля или логина)
+* Локализация на большее количество языков
+* Напоминания и статистика
+* Оптимизация
+* Интеграция с системным календарем
