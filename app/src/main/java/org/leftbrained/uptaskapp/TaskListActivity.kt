@@ -79,7 +79,31 @@ fun TaskListActivity(
                 }
             }, colors = TopAppBarDefaults.largeTopAppBarColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+            ),
+            actions = {
+                IconButton(
+                    onClick = {
+                        navController.navigate("stats/$userId")
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.DateRange,
+                        contentDescription = "Stats icon"
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        navController.navigate(
+                            "user/$userId"
+                        )
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Person,
+                        contentDescription = "Profile tab"
+                    )
+                }
+            }
         )
     }, bottomBar = {
         BottomAppBar(

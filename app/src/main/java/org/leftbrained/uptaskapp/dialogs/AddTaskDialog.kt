@@ -1,5 +1,8 @@
 package org.leftbrained.uptaskapp.dialogs
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -19,13 +22,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.R
 import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
+import org.leftbrained.uptaskapp.db.Log
 import org.leftbrained.uptaskapp.db.Tag
 import org.leftbrained.uptaskapp.db.TaskList
 import org.leftbrained.uptaskapp.db.UserTask
+import java.time.ZoneOffset
 
 @Composable
 fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: DatabaseStateViewmodel = viewModel()) {
@@ -48,6 +54,10 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
             listOf<Tag>()
         }
     }
+    var attachment by remember {
+        mutableStateOf("")
+    }
+    val sharedPref = (LocalContext.current as Activity).getPreferences(Context.MODE_PRIVATE)
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier
@@ -141,6 +151,18 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                             )
                         }
                     })
+                Row{
+                    AssistChip(onClick = {
+                        val chooseFile = Intent(Intent.ACTION_GET_CONTENT).apply {
+                            type = "*/*"
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                        }
+                        context.startActivity(Intent.createChooser(chooseFile, "Choose a file"))
+                        val path = chooseFile.data
+                        attachment = path.toString()
+
+                    }, label = { Text("Pick attachment") })
+                }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
@@ -174,6 +196,7 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                                 this.taskListId = taskList
                                 this.isDone = false
                                 this.userId = userId
+                                this.attachment = attachment
                             }
                             val newTaskId = UserTask.all().last()
                             for (tag in tags) {
@@ -181,6 +204,28 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                                 newTag.taskId = newTaskId
                             }
                             vm.databaseState++
+//                            Log.new {
+//                                this.userId = userId
+//                                this.action = "Add"
+//                                this.date = LocalDate.parse(
+//                                    Clock.System.now()
+//                                        .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
+//                                )
+//                                this.taskId = newTaskId
+//                            }
+                            // Add log to shared prefs
+                            with(sharedPref.edit()) {
+                                val logs = sharedPref.getStringSet("logs", mutableSetOf())
+                                val newLogs = logs?.toMutableSet()
+                                newLogs?.add(
+                                    "${logs.size + 1} - ${LocalDate.parse(
+                                        Clock.System.now()
+                                            .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
+                                    )} - ${userId.id.value} - Add - ${newTaskId.id.value}"
+                                )
+                                putStringSet("logs", newLogs)
+                                apply()
+                            }
                         }
                         onDismissRequest()
                     }, modifier = Modifier.weight(1f)) {

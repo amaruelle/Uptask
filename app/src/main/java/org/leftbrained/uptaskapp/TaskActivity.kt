@@ -78,13 +78,26 @@ fun TaskActivity(
                 navController.navigate("taskList/$userId")
             }) {
                 Icon(
-                    imageVector = Icons.Rounded.KeyboardArrowLeft, contentDescription = "Back icon"
+                    imageVector = Icons.Rounded.KeyboardArrowLeft,
+                    contentDescription = "Back icon"
                 )
             }
         }, actions = {
             IconButton(onClick = { showFilter = !showFilter }) {
                 Icon(
                     imageVector = Icons.Rounded.List, contentDescription = "Filter icon"
+                )
+            }
+            IconButton(
+                onClick = {
+                    navController.navigate(
+                        "user/$userId"
+                    )
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Person,
+                    contentDescription = "Profile tab"
                 )
             }
         }, colors = TopAppBarDefaults.largeTopAppBarColors(
@@ -134,7 +147,11 @@ fun TaskActivity(
                 AddTaskDialog(onDismissRequest = { showAddTask = false }, taskList!!)
             }
             if (showFilter) {
-                FilterSortDialog(onDismissRequest = { showFilter = false }, navController, taskListId)
+                FilterSortDialog(
+                    onDismissRequest = { showFilter = false },
+                    navController,
+                    taskListId
+                )
             }
         }
     }

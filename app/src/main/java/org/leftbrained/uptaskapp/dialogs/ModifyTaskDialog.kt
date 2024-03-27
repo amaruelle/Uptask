@@ -1,5 +1,8 @@
 package org.leftbrained.uptaskapp.dialogs
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,16 +19,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.R
 import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
+import org.leftbrained.uptaskapp.db.Log
 import org.leftbrained.uptaskapp.db.Tag
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.UserTask
 
 @Composable
-fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStateViewmodel = viewModel()) {
+fun ModifyTaskDialog(
+    onDismissRequest: () -> Unit,
+    taskId: Int,
+    vm: DatabaseStateViewmodel = viewModel()
+) {
     val task by remember(vm.databaseState) {
         derivedStateOf {
             transaction {
@@ -51,6 +62,13 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
             }
         }
     }
+    val userId by remember {
+        mutableIntStateOf(task.userId.id.value)
+    }
+    var attachment by remember {
+        mutableStateOf(task.attachment)
+    }
+    val sharedPref = (context as Activity).getPreferences(Context.MODE_PRIVATE)
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier
@@ -144,6 +162,18 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
                             )
                         }
                     })
+                Row {
+                    AssistChip(onClick = {
+                        val chooseFile = Intent(Intent.ACTION_GET_CONTENT).apply {
+                            type = "*/*"
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                        }
+                        context.startActivity(Intent.createChooser(chooseFile, "Choose a file"))
+                        val path = chooseFile.data
+                        attachment = path.toString()
+
+                    }, label = { Text(task.attachment!!) })
+                }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
@@ -160,7 +190,9 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
                             ).show()
                             return@Button
                         }
-                        if (name == "" || desc == "" || !priority.toString().matches(Regex("[0-5]"))) {
+                        if (name == "" || desc == "" || !priority.toString()
+                                .matches(Regex("[0-5]"))
+                        ) {
                             Toast.makeText(
                                 context,
                                 context.getString(R.string.invalid_parameters),
@@ -189,6 +221,29 @@ fun ModifyTaskDialog(onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStat
                         onClick = {
                             transaction {
                                 task.delete()
+//                                Log.new {
+//                                    userId = task.userId
+//                                    action = "Delete"
+//                                    date = LocalDate.parse(
+//                                        Clock.System.now()
+//                                            .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
+//                                    )
+//                                    this.taskId = task
+//                                }
+                            }
+                            with(sharedPref.edit()) {
+                                val logs = sharedPref.getStringSet("logs", mutableSetOf())
+                                val newLogs = logs?.toMutableSet()
+                                newLogs?.add(
+                                    "${logs.size + 1} - ${
+                                        LocalDate.parse(
+                                            Clock.System.now()
+                                                .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
+                                        )
+                                    } - $userId - Delete - ${task.id.value}"
+                                )
+                                putStringSet("logs", newLogs)
+                                apply()
                             }
                             onDismissRequest()
                             vm.databaseState++

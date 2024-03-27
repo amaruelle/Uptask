@@ -48,7 +48,7 @@ fun GeneralNav() {
         println(start)
         transaction {
             if (SchemaUtils.listTables().size > 15) return@transaction
-            SchemaUtils.create(UptaskDb.UserTasks, UptaskDb.Users, UptaskDb.TaskLists, UptaskDb.TaskTags)
+            SchemaUtils.create(UptaskDb.UserTasks, UptaskDb.Users, UptaskDb.TaskLists, UptaskDb.TaskTags, UptaskDb.Logs)
         }
     }
 
@@ -102,6 +102,12 @@ fun GeneralNav() {
         }
         composable("register") {
             RegisterActivity(navController)
+        }
+        composable("stats/{user}", arguments = listOf(navArgument("user") { type = NavType.IntType })) {
+            StatsActivity(navController, it.arguments?.getInt("user")!!)
+        }
+        composable("user/{user}", arguments = listOf(navArgument("user") { type = NavType.IntType })) {
+            UserActivity(navController, it.arguments?.getInt("user")!!)
         }
     }
     LaunchedEffect(null) {

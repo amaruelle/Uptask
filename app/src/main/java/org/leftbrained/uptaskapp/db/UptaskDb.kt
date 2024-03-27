@@ -22,6 +22,7 @@ class UptaskDb {
         val dueDate = date("dueDate")
         val isDone = bool("isDone")
         val priority = integer("priority")
+        val attachment = varchar("attachment", 150).nullable()
     }
 
     object TaskTags: IntIdTable() {
@@ -35,6 +36,12 @@ class UptaskDb {
         val emoji = varchar("emoji", 50)
     }
 
+    object Logs: IntIdTable() {
+        val userId = reference("userId", Users)
+        val date = date("date")
+        val action = varchar("action", 50)
+        val taskId = reference("taskId", UserTasks, onDelete = ReferenceOption.CASCADE).nullable()
+    }
 }
 class User(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<User>(UptaskDb.Users)
@@ -53,6 +60,7 @@ class UserTask(id: EntityID<Int>) : IntEntity(id) {
     var dueDate by UptaskDb.UserTasks.dueDate
     var isDone by UptaskDb.UserTasks.isDone
     var priority by UptaskDb.UserTasks.priority
+    var attachment by UptaskDb.UserTasks.attachment
 }
 
 class Tag(id: EntityID<Int>) : IntEntity(id) {
@@ -68,6 +76,15 @@ class TaskList(id: EntityID<Int>) : IntEntity(id) {
     var userId by User referencedOn UptaskDb.TaskLists.userId
     var name by UptaskDb.TaskLists.name
     var emoji by UptaskDb.TaskLists.emoji
+}
+
+class Log(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<Log>(UptaskDb.Logs)
+
+    var userId by User referencedOn UptaskDb.Logs.userId
+    var taskId by UserTask optionalReferencedOn UptaskDb.Logs.taskId
+    var date by UptaskDb.Logs.date
+    var action by UptaskDb.Logs.action
 }
 
 fun connectToDb() {
