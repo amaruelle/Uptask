@@ -16,6 +16,8 @@ Data organization implemented through the `H2` engine and a framework `Exposed`.
 * Powerful task management (name, description, tags and priority, due dates)
 * Flexible sorting (by name, priority, due date)
 * Full-text search (description and name)
+* Various stats for the time period
+* Profile editing
 
 ## Screenshots
 
@@ -23,9 +25,8 @@ Data organization implemented through the `H2` engine and a framework `Exposed`.
 
 ## Roadmap
 
-* Profile editing tab (change password or login)
 * Localization into more languages
-* Reminders, statistics
+* Reminders
 * Optimization
 * Calendar integration
 
