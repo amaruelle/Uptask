@@ -9,5 +9,4 @@ import org.leftbrained.uptaskapp.classes.SortingCriteria
 
 class DatabaseStateViewmodel: ViewModel() {
     var databaseState by mutableIntStateOf(1)
-    var sortingCriteria by mutableStateOf(SortingCriteria.None)
 }

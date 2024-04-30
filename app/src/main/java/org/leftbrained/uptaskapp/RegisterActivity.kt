@@ -20,10 +20,12 @@ import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.User
 import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
+import org.leftbrained.uptaskapp.viewmodel.UserViewModel
 
 @Composable
 fun RegisterActivity(navController: NavController) {
     connectToDb()
+    val userVm = remember { UserViewModel() }
     var login by remember {
         mutableStateOf("")
     }
@@ -96,19 +98,10 @@ fun RegisterActivity(navController: NavController) {
             {
                 if (login.isNotEmpty() && password.isNotEmpty()) {
                     connectToDb()
-                    transaction {
-                        User.new { this.login = login; this.password = password }
-                    }
-                    val userId = transaction {
-                        User.find {
-                            UptaskDb.Users.login eq login
-                        }.first().id.value
-                    }
-                    with(activity.getPreferences(Context.MODE_PRIVATE)?.edit()) {
-                        this?.putString("user", userId.toString())
-                        this?.apply()
-                    }
-                    navController.navigate("taskList/${userId}")
+                    val usr = userVm.newUser(login, password)
+                    val usrId = transaction { usr.id.value }
+                    userVm.setCurrentUser(activity.getPreferences(Context.MODE_PRIVATE), User.findById(usrId)!!)
+                    navController.navigate("taskList/${usrId}")
                 } else {
                     Toast.makeText(context, context.getString(R.string.please_fill_all_fields), Toast.LENGTH_SHORT).show()
                 }

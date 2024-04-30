@@ -54,9 +54,9 @@ import org.leftbrained.uptaskapp.db.UserTask
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsActivity(navController: NavController, userId: Int) {
-    val sharedPref = (LocalContext.current as Activity).getPreferences(Context.MODE_PRIVATE)
+    val sharedPref = LocalContext.current.getSharedPreferences("logs", Context.MODE_PRIVATE)
     val pickerState = rememberDateRangePickerState()
-    var currentStats by remember { mutableStateOf(Stats(userId, 0, 0, 0)) }
+    var currentStats by remember { mutableStateOf(Stats()) }
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Stats") }, navigationIcon = {
@@ -107,25 +107,7 @@ fun StatsActivity(navController: NavController, userId: Int) {
                         .toLocalDateTime(
                             TimeZone.currentSystemDefault()
                         )
-                    with(sharedPref.edit()) {
-                        val logs = sharedPref.getStringSet("logs", mutableSetOf())
-                        val totalTasks = logs?.count {
-                            val date = LocalDate.parse(it.split(" - ")[1])
-                            val action = it.split(" - ")[3]
-                            date in startDate.date..endDate.date && action == "Add" && userId == it.split(" - ")[2].toInt()
-                        } ?: 0
-                        val completedTasks = logs?.count {
-                            val date = LocalDate.parse(it.split(" - ")[1])
-                            val action = it.split(" - ")[3]
-                            date in startDate.date..endDate.date && action == "Done" && userId == it.split(" - ")[2].toInt()
-                        } ?: 0
-                        val undoneTasks = logs?.count {
-                            val date = LocalDate.parse(it.split(" - ")[1])
-                            val action = it.split(" - ")[3]
-                            date in startDate.date..endDate.date && action == "Undone" && userId == it.split(" - ")[2].toInt()
-                        } ?: 0
-                        currentStats = Stats(userId, totalTasks, completedTasks, undoneTasks)
-                    }
+                    currentStats = currentStats.checkStats(sharedPref, startDate, endDate, userId)
                 },
                 modifier = Modifier.padding(8.dp)
             ) {
@@ -151,39 +133,4 @@ fun StatsActivity(navController: NavController, userId: Int) {
             )
         }
     }
-}
-
-//fun getStats(userId: Int, startDate: LocalDate, endDate: LocalDate): Stats {
-//    return transaction {
-//        val completedTasksCount = UserTask.find {
-//            (UptaskDb.UserTasks.userId eq userId) and
-//                    (UptaskDb.Logs.date greaterEq startDate) and
-//                    (UptaskDb.Logs.date lessEq endDate) and
-//                    (UptaskDb.Logs.action eq "Done")
-//        }.count()
-//
-//        val incompleteTasksCount = UserTask.find {
-//            (UptaskDb.UserTasks.userId eq userId) and
-//                    (UptaskDb.Logs.date greaterEq startDate) and
-//                    (UptaskDb.Logs.date lessEq endDate) and
-//                    (UptaskDb.Logs.action eq "Undone")
-//        }.count()
-//
-//        val totalTasksCount = UserTask.find {
-//            (UptaskDb.UserTasks.userId eq userId) and
-//                    (UptaskDb.Logs.date greaterEq startDate) and
-//                    (UptaskDb.Logs.date lessEq endDate) and
-//                    (UptaskDb.Logs.action eq "Add")
-//        }.count()
-//
-//        val newStats = Stats(userId, totalTasksCount, completedTasksCount, incompleteTasksCount)
-//        newStats
-//    }
-//}
-
-@Preview(showSystemUi = true, device = "id:pixel_8_pro")
-@Composable
-fun StatsActivityPreview() {
-    val navController = rememberNavController()
-    StatsActivity(navController, 1)
 }

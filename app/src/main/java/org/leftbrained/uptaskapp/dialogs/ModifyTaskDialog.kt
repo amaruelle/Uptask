@@ -3,6 +3,7 @@ package org.leftbrained.uptaskapp.dialogs
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,11 +26,17 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.R
+import org.leftbrained.uptaskapp.classes.Checks
+import org.leftbrained.uptaskapp.classes.Checks.dateCheck
+import org.leftbrained.uptaskapp.classes.Checks.tagCheck
+import org.leftbrained.uptaskapp.classes.Logs
 import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.db.Log
 import org.leftbrained.uptaskapp.db.Tag
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.UserTask
+import org.leftbrained.uptaskapp.viewmodel.TagViewModel
+import org.leftbrained.uptaskapp.viewmodel.TaskViewModel
 
 @Composable
 fun ModifyTaskDialog(
@@ -37,6 +44,9 @@ fun ModifyTaskDialog(
     taskId: Int,
     vm: DatabaseStateViewmodel = viewModel()
 ) {
+    val logs = Logs(LocalContext.current.getSharedPreferences("logs", Context.MODE_PRIVATE))
+    val tagVm = remember { TagViewModel() }
+    val taskVm = remember { TaskViewModel() }
     val task by remember(vm.databaseState) {
         derivedStateOf {
             transaction {
@@ -63,12 +73,8 @@ fun ModifyTaskDialog(
         }
     }
     val userId by remember {
-        mutableIntStateOf(task.userId.id.value)
+        transaction { mutableIntStateOf(task.userId.id.value) }
     }
-    var attachment by remember {
-        mutableStateOf(task.attachment)
-    }
-    val sharedPref = (context as Activity).getPreferences(Context.MODE_PRIVATE)
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier
@@ -138,14 +144,7 @@ fun ModifyTaskDialog(
                         .padding(top = 16.dp),
                     label = { Text(stringResource(R.string.tag)) }, trailingIcon = {
                         IconButton(onClick = {
-                            if (tagEnter == "") {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.tag_empty),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                return@IconButton
-                            }
+                            if (!tagCheck(tagEnter, context)) return@IconButton
                             transaction {
                                 val newTag = Tag.new {
                                     tag = tagEnter
@@ -164,15 +163,7 @@ fun ModifyTaskDialog(
                     })
                 Row {
                     AssistChip(onClick = {
-                        val chooseFile = Intent(Intent.ACTION_GET_CONTENT).apply {
-                            type = "*/*"
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                        }
-                        context.startActivity(Intent.createChooser(chooseFile, "Choose a file"))
-                        val path = chooseFile.data
-                        attachment = path.toString()
-
-                    }, label = { Text(task.attachment!!) })
+                    }, label = { Text("Attachment") })
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -181,25 +172,9 @@ fun ModifyTaskDialog(
                         .padding(top = 16.dp)
                 ) {
                     Button(onClick = {
-                        val dateRegex = Regex("[0-9]{4}-[0-9]{2}-[0-9]{2}")
-                        if (!dueDate.matches(dateRegex)) {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.date_match),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@Button
-                        }
-                        if (name == "" || desc == "" || !priority.toString()
-                                .matches(Regex("[0-5]"))
-                        ) {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.invalid_parameters),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            return@Button
-                        }
+                        if (!dateCheck(dueDate, context)) return@Button
+                        if (!Checks.emptyCheck(name, desc, context)) return@Button
+                        if (!Checks.priorityCheck(priority, context)) return@Button
                         transaction {
                             task.task = name
                             task.description = desc
@@ -219,32 +194,8 @@ fun ModifyTaskDialog(
                     }
                     IconButton(
                         onClick = {
-                            transaction {
-                                task.delete()
-//                                Log.new {
-//                                    userId = task.userId
-//                                    action = "Delete"
-//                                    date = LocalDate.parse(
-//                                        Clock.System.now()
-//                                            .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-//                                    )
-//                                    this.taskId = task
-//                                }
-                            }
-                            with(sharedPref.edit()) {
-                                val logs = sharedPref.getStringSet("logs", mutableSetOf())
-                                val newLogs = logs?.toMutableSet()
-                                newLogs?.add(
-                                    "${logs.size + 1} - ${
-                                        LocalDate.parse(
-                                            Clock.System.now()
-                                                .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-                                        )
-                                    } - $userId - Delete - ${task.id.value}"
-                                )
-                                putStringSet("logs", newLogs)
-                                apply()
-                            }
+                            taskVm.removeTask(taskId)
+                            logs.deleteTaskLog(userId, task)
                             onDismissRequest()
                             vm.databaseState++
                         },

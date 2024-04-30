@@ -156,13 +156,3 @@ fun TaskActivity(
         }
     }
 }
-
-@Preview(device = "spec:width=411dp,height=891dp")
-@Composable
-fun TaskActivityPreview() {
-    AppTheme {
-        TaskActivity(TaskList.new {
-            this.userId = User.findById(0)!!; this.emoji = "F"; this.name = "TaskList 1"
-        }.id.value, rememberNavController(), userId = 0, sort = 0, filter = "", showDone = false)
-    }
-}

@@ -3,6 +3,7 @@ package org.leftbrained.uptaskapp
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -19,10 +20,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.classes.Checks.checkAuth
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.User
 import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
+import org.leftbrained.uptaskapp.viewmodel.UserViewModel
 
 fun Context.findActivity(): Activity {
     var context = this
@@ -35,6 +38,7 @@ fun Context.findActivity(): Activity {
 
 @Composable
 fun AuthActivity(navController: NavController) {
+    val userVm = remember { UserViewModel() }
     var login by remember {
         mutableStateOf("")
     }
@@ -104,37 +108,11 @@ fun AuthActivity(navController: NavController) {
                 maxLines = 1
             )
             Button(onClick = {
-                if (login == "" || password == "") {
-                    Toast.makeText(
-                        activity,
-                        context.getString(R.string.please_fill_all_fields),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@Button
-                }
+                if (!checkAuth(login, password, activity, context)) return@Button
                 connectToDb()
-                val user = transaction { User.find { UptaskDb.Users.login eq login }.firstOrNull() }
-                if (user == null) {
-                    Toast.makeText(
-                        activity,
-                        context.getString(R.string.user_with_this_login),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@Button
-                }
-                if (user.password != password) {
-                    Toast.makeText(
-                        activity,
-                        context.getString(R.string.incorrect_password),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@Button
-                }
+                val user = userVm.authUser(login, password, activity, context) ?: return@Button
                 val sharedPref = activity.getPreferences(Context.MODE_PRIVATE)
-                with(sharedPref.edit()) {
-                    putString("user", user.id.value.toString())
-                    apply()
-                }
+                userVm.setCurrentUser(sharedPref, user)
                 val userId = transaction { user.id.value }
                 navController.navigate("taskList/$userId")
             }) {

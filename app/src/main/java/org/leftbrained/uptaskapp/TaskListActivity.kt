@@ -144,14 +144,3 @@ fun TaskListActivity(
         }
     }
 }
-
-@Preview(device = "id:pixel_7_pro", showSystemUi = true, showBackground = true)
-@Composable
-fun TaskListActivityPreview() {
-    AppTheme {
-        TaskListActivity(
-            userId = 1,
-            navController = rememberNavController()
-        )
-    }
-}
