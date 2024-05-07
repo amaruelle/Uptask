@@ -1,6 +1,5 @@
 package org.leftbrained.uptaskapp.components
 
-import android.app.Activity
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -10,14 +9,16 @@ import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.classes.Logs
@@ -25,17 +26,26 @@ import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.db.Tag
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.UserTask
+import org.leftbrained.uptaskapp.dialogs.ModifyTaskDialog
 
 @Composable
-fun TaskView(navController: NavController, taskId: Int, vm: DatabaseStateViewmodel = viewModel()) {
-    val task =
-        remember { transaction { UserTask.find(UptaskDb.UserTasks.id eq taskId).elementAt(0) } }
+fun TaskView(taskId: Int, vm: DatabaseStateViewmodel = viewModel()) {
+    val task = remember(vm.databaseState) {
+        transaction {
+            UserTask.find(UptaskDb.UserTasks.id eq taskId).elementAt(0)
+        }
+    }
     val taskTags =
-        remember { transaction { Tag.find { UptaskDb.TaskTags.taskId eq taskId }.toList() } }
+        remember(vm.databaseState) {
+            transaction {
+                Tag.find { UptaskDb.TaskTags.taskId eq taskId }.toList()
+            }
+        }
     val sharedPref = LocalContext.current.getSharedPreferences("logs", Context.MODE_PRIVATE)
     val userId = transaction {
         task.userId.id.value
     }
+    var showEdit by remember(vm.databaseState) { mutableStateOf(false) }
     val logs = Logs(sharedPref)
     Row(
         Modifier
@@ -62,8 +72,7 @@ fun TaskView(navController: NavController, taskId: Int, vm: DatabaseStateViewmod
                         2 -> MaterialTheme.colorScheme.secondary
                         else -> MaterialTheme.colorScheme.onSurface
                     }, shape = RoundedCornerShape(12.dp)
-                )
-                , contentAlignment = Alignment.Center
+                ), contentAlignment = Alignment.Center
         ) {
             Text(
                 text = task.priority.toString(),
@@ -121,12 +130,15 @@ fun TaskView(navController: NavController, taskId: Int, vm: DatabaseStateViewmod
         }
         Spacer(Modifier.weight(1f))
         IconButton(onClick = {
-            navController.navigate("modifyTask/${taskId}")
+            showEdit = true
         }) {
             Icon(
                 imageVector = Icons.Rounded.Settings,
                 contentDescription = "Task settings icon",
             )
+        }
+        if (showEdit) {
+            ModifyTaskDialog(onDismissRequest = { showEdit = false }, taskId = taskId)
         }
     }
 }

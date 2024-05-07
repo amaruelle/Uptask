@@ -9,10 +9,8 @@ import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -21,7 +19,6 @@ import org.leftbrained.uptaskapp.db.*
 import org.leftbrained.uptaskapp.dialogs.AddTaskDialog
 import org.leftbrained.uptaskapp.dialogs.FilterSortDialog
 import org.leftbrained.uptaskapp.dialogs.SettingsDialog
-import org.leftbrained.uptaskapp.ui.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -138,7 +135,7 @@ fun TaskActivity(
                 val taskId = transaction {
                     task.id.value
                 }
-                TaskView(navController, taskId)
+                TaskView(taskId)
             }
             if (showSettings) {
                 SettingsDialog { showSettings = false }

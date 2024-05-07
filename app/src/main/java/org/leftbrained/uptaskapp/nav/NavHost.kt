@@ -9,7 +9,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -17,8 +16,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.*
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.connectToDb
-import org.leftbrained.uptaskapp.dialogs.ModifyTaskDialog
-import org.leftbrained.uptaskapp.dialogs.ModifyTaskListDialog
 
 @Composable
 fun GeneralNav() {
@@ -81,22 +78,22 @@ fun GeneralNav() {
                 showDone = it.arguments?.getBoolean("showDone")!!
             )
         }
-        dialog("modifyTask/{task}", arguments = listOf(navArgument("task") { type = NavType.IntType })) {
-            val task = it.arguments?.getInt("task")
-            ModifyTaskDialog(
-                onDismissRequest = {
-                    navController.popBackStack()
-                }, taskId = task!!
-            )
-        }
-        dialog("modifyTaskList/{taskList}", arguments = listOf(navArgument("taskList") { type = NavType.IntType })) {
-            val taskList = it.arguments?.getInt("taskList")
-            ModifyTaskListDialog(
-                onDismissRequest = {
-                    navController.popBackStack()
-                }, taskListId = taskList!!
-            )
-        }
+//        dialog("modifyTask/{task}", arguments = listOf(navArgument("task") { type = NavType.IntType })) {
+//            val task = it.arguments?.getInt("task")
+//            ModifyTaskDialog(
+//                onDismissRequest = {
+//                    navController.popBackStack()
+//                }, taskId = task!!
+//            )
+//        }
+//        dialog("modifyTaskList/{taskList}", arguments = listOf(navArgument("taskList") { type = NavType.IntType })) {
+//            val taskList = it.arguments?.getInt("taskList")
+//            ModifyTaskListDialog(
+//                onDismissRequest = {
+//                    navController.popBackStack()
+//                }, taskListId = taskList!!
+//            )
+//        }
         composable("auth") {
             AuthActivity(navController)
         }

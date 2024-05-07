@@ -13,18 +13,26 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.db.TaskList
+import org.leftbrained.uptaskapp.dialogs.ModifyTaskListDialog
 
 @Composable
-fun TaskListRow(taskList: TaskList, navController: NavController, userId: Int) {
+fun TaskListRow(taskList: TaskList, navController: NavController, userId: Int, vm: DatabaseStateViewmodel = viewModel()) {
     val taskListId = transaction {
         taskList.id.value
     }
+    var showEdit by remember(vm.databaseState) { mutableStateOf(false) }
     Row(
         Modifier
             .padding(12.dp)
@@ -51,7 +59,7 @@ fun TaskListRow(taskList: TaskList, navController: NavController, userId: Int) {
         }
         Spacer(Modifier.weight(1f))
         IconButton(onClick = {
-            navController.navigate("modifyTaskList/$taskListId")
+            showEdit = true
         }) {
             Icon(
                 imageVector = Icons.Rounded.Settings,
@@ -67,6 +75,9 @@ fun TaskListRow(taskList: TaskList, navController: NavController, userId: Int) {
                     shape = CircleShape
                 )
             )
+        }
+        if (showEdit) {
+            ModifyTaskListDialog(onDismissRequest = { showEdit = false }, taskListId = taskListId)
         }
     }
 }

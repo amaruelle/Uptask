@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AddCircle
 import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -71,7 +72,11 @@ fun AddTaskDialog(
                 .height(400.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
-            Column(Modifier.padding(16.dp).verticalScroll(scrollState)) {
+            Column(
+                Modifier
+                    .padding(16.dp)
+                    .verticalScroll(scrollState)
+            ) {
                 Text(
                     text = stringResource(R.string.add_task),
                     style = MaterialTheme.typography.titleLarge,
@@ -139,33 +144,39 @@ fun AddTaskDialog(
                             )
                         }
                     })
-                Row {
-                    AssistChip(onClick = {}, label = { Text("Pick attachment") })
+                Row(Modifier.padding(top = 12.dp)) {
+                    AssistChip(onClick = {}, label = { Text("Pick attachment") }, leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.AddCircle,
+                            contentDescription = "Add attachment icon"
+                        )
+                    })
                 }
-                // Expandable section for all tags
-                Row {
-                    Text("Select existing tags")
-                    Icon(imageVector = Icons.Rounded.ArrowForward,
-                        contentDescription = "Add tag icon",
-                        modifier = Modifier.clickable {
+                Row(
+                    Modifier
+                        .clickable {
                             showExpandableTags = !showExpandableTags
-                        })
+                        }
+                        .padding(top = 12.dp, bottom = 6.dp)) {
+                    Text("Click to select existing")
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowForward,
+                        contentDescription = "Add tag icon"
+                    )
                 }
                 if (showExpandableTags) {
                     LazyRow {
+                        val distinctTags = transaction { (Tag.all().groupBy { it.tag }) }
                         transaction {
-                            items(transaction { Tag.all().count().toInt() }) { tag ->
-                                AssistChip(
-                                    label = { Text(text = transaction { Tag[tag + 1].tag }) },
-                                    onClick = {
-                                        transaction {
-                                            val newTag = Tag[tag + 1]
-                                            tags.add(newTag.tag)
-                                        }
+                            for (el in distinctTags) {
+                                item {
+                                    AssistChip(onClick = {
+                                        tags.add(el.key)
                                         vm.databaseState++
-                                    },
-                                    modifier = Modifier.padding(end = 8.dp)
-                                )
+                                    }, label = { Text(el.key) },
+                                        Modifier.padding(end = 4.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -203,3 +214,17 @@ fun AddTaskDialog(
         }
     }
 }
+
+//items(distinctTags) { tag ->
+//    AssistChip(
+//        label = { Text(text = transaction { Tag[tag.second].tag }) },
+//        onClick = {
+//            transaction {
+//                val newTag = Tag[tag.id]
+//                tags.add(newTag.tag)
+//            }
+//            vm.databaseState++
+//        },
+//        modifier = Modifier.padding(end = 8.dp)
+//    )
+//}

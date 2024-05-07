@@ -1,4 +1,4 @@
-package org.leftbrained.uptaskapp.nav
+package org.leftbrained.uptaskapp
 
 import android.app.Activity
 import android.content.Context
@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -28,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,7 +34,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.R
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.User
 import org.leftbrained.uptaskapp.db.connectToDb
