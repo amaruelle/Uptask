@@ -5,10 +5,15 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -44,8 +49,8 @@ fun ModifyTaskDialog(
     taskId: Int,
     vm: DatabaseStateViewmodel = viewModel()
 ) {
+    val scrollState = rememberScrollState()
     val logs = Logs(LocalContext.current.getSharedPreferences("logs", Context.MODE_PRIVATE))
-    val tagVm = remember { TagViewModel() }
     val taskVm = remember { TaskViewModel() }
     val task by remember(vm.databaseState) {
         derivedStateOf {
@@ -54,6 +59,7 @@ fun ModifyTaskDialog(
             }
         }
     }
+    var showExpandableTags by remember { mutableStateOf(false) }
     val tags = remember {
         mutableListOf<Tag>()
     }
@@ -79,10 +85,11 @@ fun ModifyTaskDialog(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(16.dp)
+                .height(400.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
-            Column(Modifier.padding(16.dp)) {
+            Column(Modifier.padding(16.dp).verticalScroll(scrollState)) {
                 Text(
                     text = stringResource(R.string.modify_task),
                     style = MaterialTheme.typography.titleLarge,
@@ -164,6 +171,33 @@ fun ModifyTaskDialog(
                 Row {
                     AssistChip(onClick = {
                     }, label = { Text("Attachment") })
+                }
+                Row {
+                    Text("Select existing tags")
+                    Icon(imageVector = Icons.Rounded.ArrowForward,
+                        contentDescription = "Add tag icon",
+                        modifier = Modifier.clickable {
+                            showExpandableTags = !showExpandableTags
+                        })
+                }
+                if (showExpandableTags) {
+                    LazyRow {
+                        transaction {
+                            items(transaction { Tag.all().count().toInt() }) { tag ->
+                                AssistChip(
+                                    label = { Text(text = transaction { Tag[tag + 1].tag }) },
+                                    onClick = {
+                                        transaction {
+                                            val newTag = Tag[tag + 1]
+                                            tags.add(newTag)
+                                        }
+                                        vm.databaseState++
+                                    },
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                            }
+                        }
+                    }
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),

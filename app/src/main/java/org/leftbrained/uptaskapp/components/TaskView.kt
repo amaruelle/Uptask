@@ -52,6 +52,31 @@ fun TaskView(navController: NavController, taskId: Int, vm: DatabaseStateViewmod
             }
             vm.databaseState++
         })
+        Box(
+            Modifier
+                .size(24.dp)
+                .background(
+                    when (task.priority) {
+                        0 -> MaterialTheme.colorScheme.error
+                        1 -> MaterialTheme.colorScheme.tertiary
+                        2 -> MaterialTheme.colorScheme.secondary
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }, shape = RoundedCornerShape(12.dp)
+                )
+                , contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = task.priority.toString(),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(4.dp),
+                color = when (task.priority) {
+                    0 -> MaterialTheme.colorScheme.onError
+                    1 -> MaterialTheme.colorScheme.onTertiary
+                    2 -> MaterialTheme.colorScheme.onSecondary
+                    else -> MaterialTheme.colorScheme.surface
+                }
+            )
+        }
         Column(Modifier.padding(12.dp)) {
             Text(
                 text = task.task,

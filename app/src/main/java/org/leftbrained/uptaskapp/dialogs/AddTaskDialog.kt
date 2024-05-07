@@ -1,12 +1,19 @@
 package org.leftbrained.uptaskapp.dialogs
 
 import android.content.Context
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -34,32 +41,37 @@ import org.leftbrained.uptaskapp.viewmodel.TagViewModel
 import org.leftbrained.uptaskapp.viewmodel.TaskViewModel
 
 @Composable
-fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: DatabaseStateViewmodel = viewModel()) {
+fun AddTaskDialog(
+    onDismissRequest: () -> Unit, taskList: TaskList, vm: DatabaseStateViewmodel = viewModel()
+) {
     val taskVm by remember { mutableStateOf(TaskViewModel()) }
     val tagVm by remember { mutableStateOf(TagViewModel()) }
     var name by remember { mutableStateOf("My Task") }
     var desc by remember { mutableStateOf("My Description") }
     val logs = Logs(LocalContext.current.getSharedPreferences("logs", Context.MODE_PRIVATE))
+    var showExpandableTags by remember { mutableStateOf(false) }
     var dueDate by remember {
         mutableStateOf(
             Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
         )
     }
     val tags = remember {
-        mutableListOf<Tag>()
+        mutableListOf<String>()
     }
     val context = LocalContext.current
     var priority by remember { mutableIntStateOf(0) }
     var tagEnter by remember { mutableStateOf("") }
     val userId = transaction { taskList.userId }
+    val scrollState = rememberScrollState()
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(16.dp)
+                .height(400.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
-            Column(Modifier.padding(16.dp)) {
+            Column(Modifier.padding(16.dp).verticalScroll(scrollState)) {
                 Text(
                     text = stringResource(R.string.add_task),
                     style = MaterialTheme.typography.titleLarge,
@@ -70,8 +82,7 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                 )
                 Text(
                     text = stringResource(R.string.enter_values_for_new_task),
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                 )
                 OutlinedTextField(
@@ -101,41 +112,63 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                 LazyRow {
                     items(tags) { tag ->
                         AssistChip(
-                            label = { Text(text = tag.tag) },
-                            onClick = {
-                                tagVm.removeTag(tag.id.value)
-                                vm.databaseState++
-                            },
-                            modifier = Modifier.padding(end = 8.dp)
+                            label = { Text(text = tag) },
+                            modifier = Modifier.padding(end = 8.dp),
+                            onClick = { tags.remove(tag) }
                         )
                     }
                 }
-                OutlinedTextField(
-                    maxLines = 1,
+                OutlinedTextField(maxLines = 1,
                     value = tagEnter,
                     onValueChange = { tagEnter = it },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp),
-                    label = { Text(stringResource(R.string.tag)) }, trailingIcon = {
+                    label = { Text(stringResource(R.string.tag)) },
+                    trailingIcon = {
                         IconButton(onClick = {
                             if (!tagCheck(tagEnter, context)) return@IconButton
                             transaction {
-                                val newTag = tagVm.newTag(tagEnter, UserTask.all().last())
-                                tags.add(newTag)
+                                tags.add(tagEnter)
                             }
                             tagEnter = ""
                             vm.databaseState++
                         }) {
                             Icon(
-                                imageVector = Icons.Rounded.Add,
-                                contentDescription = "Add tag icon"
+                                imageVector = Icons.Rounded.Add, contentDescription = "Add tag icon"
                             )
                         }
                     })
-                Row{
-                    AssistChip(onClick = {
-                    }, label = { Text("Pick attachment") })
+                Row {
+                    AssistChip(onClick = {}, label = { Text("Pick attachment") })
+                }
+                // Expandable section for all tags
+                Row {
+                    Text("Select existing tags")
+                    Icon(imageVector = Icons.Rounded.ArrowForward,
+                        contentDescription = "Add tag icon",
+                        modifier = Modifier.clickable {
+                            showExpandableTags = !showExpandableTags
+                        })
+                }
+                if (showExpandableTags) {
+                    LazyRow {
+                        transaction {
+                            items(transaction { Tag.all().count().toInt() }) { tag ->
+                                AssistChip(
+                                    label = { Text(text = transaction { Tag[tag + 1].tag }) },
+                                    onClick = {
+                                        transaction {
+                                            val newTag = Tag[tag + 1]
+                                            tags.add(newTag.tag)
+                                        }
+                                        vm.databaseState++
+                                    },
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                            }
+                        }
+                    }
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -151,8 +184,7 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                             taskVm.newTask(name, desc, dueDate, priority, taskList, userId)
                             val newTaskId = UserTask.all().last()
                             for (tag in tags) {
-                                val newTag = Tag[tag.id.value]
-                                newTag.taskId = newTaskId
+                                tagVm.newTag(tag, newTaskId)
                             }
                             vm.databaseState++
                             logs.addTaskLog(userId, newTaskId)
@@ -162,8 +194,7 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, taskList: TaskList, vm: Database
                         Text(text = stringResource(R.string.add))
                     }
                     OutlinedButton(
-                        onClick = { onDismissRequest() },
-                        modifier = Modifier.weight(1f)
+                        onClick = { onDismissRequest() }, modifier = Modifier.weight(1f)
                     ) {
                         Text(text = stringResource(R.string.cancel))
                     }
