@@ -151,7 +151,9 @@ fun TaskView(taskId: Int, vm: DatabaseStateViewmodel = viewModel()) {
                 for (tag in taskTags) {
                     AssistChip(
                         label = { Text(text = tag.tag) },
-                        onClick = { tag.delete() },
+                        onClick = {
+
+                        },
                         modifier = Modifier.padding(end = 8.dp)
                     )
                 }
