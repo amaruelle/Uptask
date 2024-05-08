@@ -6,25 +6,24 @@ import android.widget.Toast
 import org.leftbrained.uptaskapp.R
 
 object Checks {
-    fun dateCheck(dueDate: String, context: Context): Boolean {
-        val dateRegex = Regex("[0-9]{4}-[0-9]{2}-[0-9]{2}")
-        if (!dueDate.matches(dateRegex)) {
-            Toast.makeText(
-                context,
-                "Date doesn't match the pattern",
-                Toast.LENGTH_SHORT
-            ).show()
-            return false
-        }
-        return true
-    }
+//    fun dateCheck(dueDate: String, context: Context): Boolean {
+//        val dateRegex = Regex("[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}")
+//        if (!dueDate.matches(dateRegex)) {
+//            Toast.makeText(
+//                context,
+//                "Date doesn't match the pattern",
+//                Toast.LENGTH_SHORT
+//            ).show()
+//            return false
+//        }
+//        return true
+//    }
 
     fun emptyCheck(
         name: String,
-        desc: String,
         context: Context
     ): Boolean {
-        if (name == "" || desc == "") {
+        if (name == "") {
             Toast.makeText(
                 context,
                 "Empty values not allowed",

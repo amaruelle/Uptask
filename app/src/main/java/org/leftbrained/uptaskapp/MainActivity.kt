@@ -1,9 +1,12 @@
 package org.leftbrained.uptaskapp
 
+import android.app.Activity
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,11 +27,14 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.components.UnorderedList
+import org.leftbrained.uptaskapp.db.UserTask
 import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.nav.GeneralNav
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
+import org.leftbrained.uptaskapp.viewmodel.TaskViewModel
 
 class MainActivity : ComponentActivity() {
+    private val sharedViewModel: TaskViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {

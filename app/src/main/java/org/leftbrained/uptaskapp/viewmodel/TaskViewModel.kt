@@ -1,7 +1,7 @@
 package org.leftbrained.uptaskapp.viewmodel
 
 import androidx.lifecycle.ViewModel
-import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.db.TaskList
@@ -16,16 +16,16 @@ class TaskViewModel : ViewModel() {
 
     fun newTask(
         name: String,
-        desc: String,
-        dueDate: String,
-        priority: Int,
+        desc: String? = "",
+        dueDate: LocalDateTime?,
+        priority: Int?,
         taskList: TaskList,
         userId: User
     ): UserTask = transaction {
         UserTask.new {
             this.task = name
             this.description = desc
-            this.dueDate = LocalDate.parse(dueDate)
+            this.dueDate = dueDate
             this.priority = priority.toString().toInt()
             this.taskListId = taskList
             this.isDone = false

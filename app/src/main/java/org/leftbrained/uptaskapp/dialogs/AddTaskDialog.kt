@@ -1,22 +1,50 @@
 package org.leftbrained.uptaskapp.dialogs
 
 import android.content.Context
+import androidx.compose.material3.TimePicker
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.AccessTime
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AddCircle
-import androidx.compose.material.icons.rounded.ArrowForward
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.rounded.DateRange
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -24,12 +52,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.datetime.Clock
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.R
-import org.leftbrained.uptaskapp.classes.Checks.dateCheck
 import org.leftbrained.uptaskapp.classes.Checks.emptyCheck
 import org.leftbrained.uptaskapp.classes.Checks.priorityCheck
 import org.leftbrained.uptaskapp.classes.Checks.tagCheck
@@ -41,6 +71,7 @@ import org.leftbrained.uptaskapp.db.UserTask
 import org.leftbrained.uptaskapp.viewmodel.TagViewModel
 import org.leftbrained.uptaskapp.viewmodel.TaskViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTaskDialog(
     onDismissRequest: () -> Unit, taskList: TaskList, vm: DatabaseStateViewmodel = viewModel()
@@ -49,13 +80,18 @@ fun AddTaskDialog(
     val tagVm by remember { mutableStateOf(TagViewModel()) }
     var name by remember { mutableStateOf("My Task") }
     var desc by remember { mutableStateOf("My Description") }
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     val logs = Logs(LocalContext.current.getSharedPreferences("logs", Context.MODE_PRIVATE))
     var showExpandableTags by remember { mutableStateOf(false) }
-    var dueDate by remember {
+    var dueDate: LocalDateTime? by remember {
         mutableStateOf(
-            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
+            null
         )
     }
+    var dueTime by remember { mutableStateOf("") }
+    var showFilePicker by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
     val tags = remember {
         mutableListOf<String>()
     }
@@ -64,6 +100,9 @@ fun AddTaskDialog(
     var tagEnter by remember { mutableStateOf("") }
     val userId = transaction { taskList.userId }
     val scrollState = rememberScrollState()
+    val datePickerState = rememberDatePickerState()
+    val timePickerState = rememberTimePickerState()
+    var showTimePicker by remember { mutableStateOf(false) }
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier
@@ -102,18 +141,102 @@ fun AddTaskDialog(
                     label = { Text(stringResource(R.string.description)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
-                OutlinedTextField(
-                    value = priority.toString(),
-                    onValueChange = { priority = if (it == "") 0 else it.toInt() },
-                    label = { Text(stringResource(R.string.priority)) },
-                    modifier = Modifier.padding(top = 16.dp)
+                Slider(
+                    value = priority.toFloat(),
+                    onValueChange = { priority = it.toInt() },
+                    valueRange = 0f..5f,
+                    steps = 5,
+                    modifier = Modifier.padding(top = 16.dp),
                 )
-                OutlinedTextField(
-                    value = dueDate,
-                    onValueChange = { dueDate = it },
-                    label = { Text(stringResource(R.string.due_date)) },
-                    modifier = Modifier.padding(top = 16.dp)
-                )
+                Text("Priority: $priority")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(
+                        onClick = {
+                            showDatePicker = true
+                        },
+                        modifier = Modifier.padding(top = 16.dp)
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(
+                                imageVector = Icons.Rounded.DateRange,
+                                contentDescription = "Due date icon"
+                            )
+                            Text("Select due date")
+                        }
+                    }
+                    TextButton(onClick = {
+                        dueDate = null
+                    }) {
+                        Text(text = "Clear")
+                    }
+                }
+
+                Text("${dueDate?.date ?: "No date selected"}")
+                if (showDatePicker) {
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            if (datePickerState.selectedDateMillis == null) return@DatePickerDialog
+                            val hourInMillis = timePickerState.hour * 3600000
+                            val minuteInMillis = timePickerState.minute * 60000
+                            val totalMillis =
+                                hourInMillis + minuteInMillis + datePickerState.selectedDateMillis!!
+                            Instant.fromEpochMilliseconds(totalMillis).toLocalDateTime(TimeZone.UTC)
+                            dueDate = Instant.fromEpochMilliseconds(totalMillis)
+                                .toLocalDateTime(TimeZone.UTC)
+                        }) {
+                        Column(Modifier.padding(16.dp)) {
+                            DatePicker(
+                                state = datePickerState
+                            )
+                            Button(onClick = {
+                                showDatePicker = false
+                            }) {
+                                Text("Confirm")
+                            }
+                        }
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(
+                        onClick = {
+                            showTimePicker = true
+                        },
+                        modifier = Modifier.padding(top = 16.dp)
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(
+                                imageVector = Icons.Rounded.AccessTime,
+                                contentDescription = "Due time icon"
+                            )
+                            Text("Select due time")
+                        }
+                    }
+                    TextButton(onClick = {
+                        dueTime = ""
+                    }) {
+                        Text(text = "Clear")
+                    }
+                }
+                Text(if (dueTime == "") "No time selected" else dueTime)
+                if (showTimePicker) {
+                    Dialog(onDismissRequest = { showTimePicker = false }) {
+                        Card {
+                            Column(Modifier.padding(16.dp)) {
+                                TimePicker(state = timePickerState)
+                                Row {
+                                    Button(onClick = {
+                                        dueTime =
+                                            "${timePickerState.hour}:${timePickerState.minute}"
+                                        showTimePicker = false
+                                    }) {
+                                        Text("Confirm")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 LazyRow {
                     items(tags) { tag ->
                         AssistChip(
@@ -133,6 +256,14 @@ fun AddTaskDialog(
                     trailingIcon = {
                         IconButton(onClick = {
                             if (!tagCheck(tagEnter, context)) return@IconButton
+                            if (tags.find { it == tagEnter } != null) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        "Tag already added"
+                                    )
+                                }
+                                return@IconButton
+                            }
                             transaction {
                                 tags.add(tagEnter)
                             }
@@ -145,7 +276,10 @@ fun AddTaskDialog(
                         }
                     })
                 Row(Modifier.padding(top = 12.dp)) {
-                    AssistChip(onClick = {}, label = { Text("Pick attachment") }, leadingIcon = {
+                    AssistChip(onClick = {
+                        showFilePicker = true
+
+                    }, label = { Text("Pick attachment") }, leadingIcon = {
                         Icon(
                             imageVector = Icons.Rounded.AddCircle,
                             contentDescription = "Add attachment icon"
@@ -160,7 +294,7 @@ fun AddTaskDialog(
                         .padding(top = 12.dp, bottom = 6.dp)) {
                     Text("Click to select existing")
                     Icon(
-                        imageVector = Icons.Rounded.ArrowForward,
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                         contentDescription = "Add tag icon"
                     )
                 }
@@ -188,11 +322,27 @@ fun AddTaskDialog(
                         .padding(top = 16.dp)
                 ) {
                     Button(onClick = {
-                        if (!dateCheck(dueDate, context)) return@Button
-                        if (!emptyCheck(name, desc, context)) return@Button
+                        if (!emptyCheck(name, context)) return@Button
                         if (!priorityCheck(priority, context)) return@Button
+                        if (dueDate != null) {
+                            val hourInMillis = timePickerState.hour * 3600000
+                            val minuteInMillis = timePickerState.minute * 60000
+                            val totalMillis =
+                                hourInMillis + minuteInMillis + dueDate!!.toInstant(TimeZone.UTC).toEpochMilliseconds()
+                            dueDate =
+                                Instant.fromEpochMilliseconds(totalMillis)
+                                    .toLocalDateTime(TimeZone.UTC)
+                            println("Total millis selected: $totalMillis")
+                        }
                         transaction {
-                            taskVm.newTask(name, desc, dueDate, priority, taskList, userId)
+                            taskVm.newTask(
+                                name,
+                                desc,
+                                dueDate,
+                                priority,
+                                taskList,
+                                userId
+                            )
                             val newTaskId = UserTask.all().last()
                             for (tag in tags) {
                                 tagVm.newTag(tag, newTaskId)
@@ -214,17 +364,3 @@ fun AddTaskDialog(
         }
     }
 }
-
-//items(distinctTags) { tag ->
-//    AssistChip(
-//        label = { Text(text = transaction { Tag[tag.second].tag }) },
-//        onClick = {
-//            transaction {
-//                val newTag = Tag[tag.id]
-//                tags.add(newTag.tag)
-//            }
-//            vm.databaseState++
-//        },
-//        modifier = Modifier.padding(end = 8.dp)
-//    )
-//}

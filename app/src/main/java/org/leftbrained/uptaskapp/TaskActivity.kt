@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -52,8 +53,8 @@ fun TaskActivity(
                     }
                 ).filter {
                     when (filter) {
-                        "none" -> it.task.contains("") || it.description.contains("")
-                        else -> it.task.contains(filter) || it.description.contains(filter)
+                        "none" -> it.task.contains("") || it.description?.contains("") ?: true
+                        else -> it.task.contains(filter) || it.description?.contains(filter) ?: true
                     }
                 }.toList()
             }
@@ -75,14 +76,14 @@ fun TaskActivity(
                 navController.navigate("taskList/$userId")
             }) {
                 Icon(
-                    imageVector = Icons.Rounded.KeyboardArrowLeft,
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Back icon"
                 )
             }
         }, actions = {
             IconButton(onClick = { showFilter = !showFilter }) {
                 Icon(
-                    imageVector = Icons.Rounded.List, contentDescription = "Filter icon"
+                    imageVector = Icons.Rounded.FilterAlt, contentDescription = "Filter icon"
                 )
             }
             IconButton(
@@ -93,7 +94,7 @@ fun TaskActivity(
                 }
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Person,
+                    imageVector = Icons.Rounded.AccountCircle,
                     contentDescription = "Profile tab"
                 )
             }

@@ -1,10 +1,6 @@
 package org.leftbrained.uptaskapp.dialogs
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
-import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -12,9 +8,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.AccessTime
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AddCircle
-import androidx.compose.material.icons.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,24 +24,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.R
 import org.leftbrained.uptaskapp.classes.Checks
-import org.leftbrained.uptaskapp.classes.Checks.dateCheck
 import org.leftbrained.uptaskapp.classes.Checks.tagCheck
 import org.leftbrained.uptaskapp.classes.Logs
 import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
-import org.leftbrained.uptaskapp.db.Log
 import org.leftbrained.uptaskapp.db.Tag
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.UserTask
-import org.leftbrained.uptaskapp.viewmodel.TagViewModel
 import org.leftbrained.uptaskapp.viewmodel.TaskViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModifyTaskDialog(
     onDismissRequest: () -> Unit,
@@ -53,6 +52,8 @@ fun ModifyTaskDialog(
     val scrollState = rememberScrollState()
     val logs = Logs(LocalContext.current.getSharedPreferences("logs", Context.MODE_PRIVATE))
     val taskVm = remember { TaskViewModel() }
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     val task by remember(vm.databaseState) {
         derivedStateOf {
             transaction {
@@ -60,17 +61,36 @@ fun ModifyTaskDialog(
             }
         }
     }
+    val initialDate =
+        if (task.dueDate != null) task.dueDate!!.toInstant(TimeZone.UTC).toEpochMilliseconds() else Instant.fromEpochMilliseconds(
+            Clock.System.now().epochSeconds
+        ).toEpochMilliseconds()
+    val datePickerState =
+        rememberDatePickerState(
+            initialSelectedDateMillis = initialDate
+        )
+    val timePickerState = rememberTimePickerState(
+        if (task.dueDate == null) 0 else task.dueDate!!.time.hour,
+        if (task.dueDate == null) 0 else task.dueDate!!.time.minute
+    )
+    var showTimePicker by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
     var showExpandableTags by remember { mutableStateOf(false) }
+    var dueDate: LocalDateTime? by remember {
+        mutableStateOf(
+            Instant.fromEpochMilliseconds(
+                initialDate
+            ).toLocalDateTime(TimeZone.UTC)
+        )
+    }
+    var dueTime by remember { mutableStateOf(task.dueDate?.time.toString()) }
     val tags = remember {
         mutableListOf<Tag>()
     }
     val context = LocalContext.current
     var name by remember { mutableStateOf(task.task) }
     var desc by remember { mutableStateOf(task.description) }
-    var dueDate = remember {
-        task.dueDate.toString()
-    }
-    var priority by remember { mutableIntStateOf(task.priority) }
+    var priority by remember { mutableIntStateOf(task.priority!!) }
     var tagEnter by remember { mutableStateOf("") }
     val taskTags by remember(vm.databaseState) {
         derivedStateOf {
@@ -90,7 +110,11 @@ fun ModifyTaskDialog(
                 .height(400.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
-            Column(Modifier.padding(16.dp).verticalScroll(scrollState)) {
+            Column(
+                Modifier
+                    .padding(16.dp)
+                    .verticalScroll(scrollState)
+            ) {
                 Text(
                     text = stringResource(R.string.modify_task),
                     style = MaterialTheme.typography.titleLarge,
@@ -112,23 +136,107 @@ fun ModifyTaskDialog(
                     modifier = Modifier.padding(top = 16.dp)
                 )
                 OutlinedTextField(
-                    value = desc,
+                    value = desc ?: "",
                     onValueChange = { desc = it },
                     label = { Text(stringResource(R.string.description)) },
                     modifier = Modifier.padding(top = 16.dp)
                 )
-                OutlinedTextField(
-                    value = priority.toString(),
-                    onValueChange = { priority = if (it == "") 0 else it.toInt() },
-                    label = { Text(stringResource(R.string.priority)) },
-                    modifier = Modifier.padding(top = 16.dp)
+                Slider(
+                    value = priority.toFloat(),
+                    onValueChange = { priority = it.toInt() },
+                    valueRange = 0f..5f,
+                    steps = 5,
+                    modifier = Modifier.padding(top = 16.dp),
                 )
-                OutlinedTextField(
-                    value = dueDate,
-                    onValueChange = { dueDate = it },
-                    label = { Text(stringResource(R.string.due_date)) },
-                    modifier = Modifier.padding(top = 16.dp)
-                )
+                Text("Priority: $priority")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(
+                        onClick = {
+                            showDatePicker = true
+                        },
+                        modifier = Modifier.padding(top = 16.dp)
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(
+                                imageVector = Icons.Rounded.DateRange,
+                                contentDescription = "Due date icon"
+                            )
+                            Text("Select due date")
+                        }
+                    }
+                    TextButton(onClick = {
+                        dueDate = null
+                    }) {
+                        Text(text = "Clear")
+                    }
+                }
+
+                Text("${dueDate?.date ?: "No date selected"}")
+                if (showDatePicker) {
+                    DatePickerDialog(
+                        onDismissRequest = { showDatePicker = false },
+                        confirmButton = {
+                            if (datePickerState.selectedDateMillis == null) return@DatePickerDialog
+                            val hourInMillis = timePickerState.hour * 3600000
+                            val minuteInMillis = timePickerState.minute * 60000
+                            val totalMillis =
+                                hourInMillis + minuteInMillis + datePickerState.selectedDateMillis!!
+                            Instant.fromEpochMilliseconds(totalMillis).toLocalDateTime(TimeZone.UTC)
+                            dueDate = Instant.fromEpochMilliseconds(totalMillis)
+                                .toLocalDateTime(TimeZone.UTC)
+                        }) {
+                        Column(Modifier.padding(16.dp)) {
+                            DatePicker(
+                                state = datePickerState
+                            )
+                            Button(onClick = {
+                                showDatePicker = false
+                            }) {
+                                Text("Confirm")
+                            }
+                        }
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(
+                        onClick = {
+                            showTimePicker = true
+                        },
+                        modifier = Modifier.padding(top = 16.dp)
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(
+                                imageVector = Icons.Rounded.AccessTime,
+                                contentDescription = "Due time icon"
+                            )
+                            Text("Select due time")
+                        }
+                    }
+                    TextButton(onClick = {
+                        dueTime = ""
+                    }) {
+                        Text(text = "Clear")
+                    }
+                }
+                Text(if (dueTime == "") "No time selected" else dueTime)
+                if (showTimePicker) {
+                    Dialog(onDismissRequest = { showTimePicker = false }) {
+                        Card {
+                            Column(Modifier.padding(16.dp)) {
+                                TimePicker(state = timePickerState)
+                                Row {
+                                    Button(onClick = {
+                                        dueTime =
+                                            "${timePickerState.hour}:${timePickerState.minute}"
+                                        showTimePicker = false
+                                    }) {
+                                        Text("Confirm")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     for (tag in taskTags) {
                         AssistChip(
@@ -153,6 +261,14 @@ fun ModifyTaskDialog(
                     label = { Text(stringResource(R.string.tag)) }, trailingIcon = {
                         IconButton(onClick = {
                             if (!tagCheck(tagEnter, context)) return@IconButton
+                            if (tags.find { it.tag == tagEnter } != null) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        "Tag already added"
+                                    )
+                                }
+                                return@IconButton
+                            }
                             transaction {
                                 val newTag = Tag.new {
                                     tag = tagEnter
@@ -185,7 +301,7 @@ fun ModifyTaskDialog(
                         .padding(top = 12.dp, bottom = 6.dp)) {
                     Text("Click to select existing")
                     Icon(
-                        imageVector = Icons.Rounded.ArrowForward,
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                         contentDescription = "Add tag icon"
                     )
                 }
@@ -213,13 +329,22 @@ fun ModifyTaskDialog(
                         .padding(top = 16.dp)
                 ) {
                     Button(onClick = {
-                        if (!dateCheck(dueDate, context)) return@Button
-                        if (!Checks.emptyCheck(name, desc, context)) return@Button
+                        if (!Checks.emptyCheck(name, context)) return@Button
                         if (!Checks.priorityCheck(priority, context)) return@Button
+                        if (dueDate != null) {
+                            val hourInMillis = timePickerState.hour * 3600000
+                            val minuteInMillis = timePickerState.minute * 60000
+                            val totalMillis =
+                                hourInMillis + minuteInMillis + dueDate!!.toInstant(TimeZone.UTC).toEpochMilliseconds()
+                            dueDate =
+                                Instant.fromEpochMilliseconds(totalMillis)
+                                    .toLocalDateTime(TimeZone.UTC)
+                            println("Total millis selected: $totalMillis")
+                        }
                         transaction {
                             task.task = name
                             task.description = desc
-                            task.dueDate = LocalDate.parse(dueDate)
+                            task.dueDate = dueDate
                             task.priority = priority
                         }
                         onDismissRequest()

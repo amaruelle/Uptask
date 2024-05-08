@@ -1,6 +1,9 @@
 package org.leftbrained.uptaskapp.components
 
+import android.app.Activity
 import android.content.Context
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,13 +15,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.classes.Logs
@@ -27,9 +33,11 @@ import org.leftbrained.uptaskapp.db.Tag
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.UserTask
 import org.leftbrained.uptaskapp.dialogs.ModifyTaskDialog
+import java.util.Locale
 
 @Composable
 fun TaskView(taskId: Int, vm: DatabaseStateViewmodel = viewModel()) {
+
     val task = remember(vm.databaseState) {
         transaction {
             UserTask.find(UptaskDb.UserTasks.id eq taskId).elementAt(0)
@@ -93,23 +101,37 @@ fun TaskView(taskId: Int, vm: DatabaseStateViewmodel = viewModel()) {
                 modifier = Modifier.padding(bottom = 8.dp),
                 fontWeight = FontWeight.Bold
             )
-            Text(
-                text = task.description,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Rounded.DateRange,
-                    contentDescription = "Date range icon",
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.tertiary
-                )
+            if (task.description != "") {
                 Text(
-                    text = task.dueDate.toString(),
+                    text = task.description!!,
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(start = 8.dp)
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
+            }
+            if (task.dueDate != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Rounded.DateRange,
+                        contentDescription = "Date range icon",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.tertiary
+                    )
+                    Text(
+                        text = task.dueDate?.let {
+                            "${it.dayOfMonth} ${
+                                it.month.name.let { name ->
+                                    name.substring(0, 1)
+                                        .uppercase(Locale.ROOT) + name.substring(1)
+                                        .lowercase(Locale.ROOT)
+
+                                }
+                            }, ${it.year} ${if (it.hour != 0 && it.minute != 0) "${it.hour}:${it.minute}" else ""}"
+                        }
+                            .toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
             }
             Row {
                 for (tag in taskTags) {
@@ -120,12 +142,14 @@ fun TaskView(taskId: Int, vm: DatabaseStateViewmodel = viewModel()) {
                     )
                 }
             }
-            Row {
-                AssistChip(
-                    label = { Text(text = "Attachment") },
-                    onClick = {},
-                    modifier = Modifier.padding(end = 8.dp)
-                )
+            if (task.attachment != null) {
+                Row {
+                    AssistChip(
+                        label = { Text(task.attachment!!) },
+                        onClick = {},
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                }
             }
         }
         Spacer(Modifier.weight(1f))

@@ -7,6 +7,7 @@ import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.kotlin.datetime.date
+import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
 class UptaskDb {
     object Users: IntIdTable() {
@@ -18,10 +19,10 @@ class UptaskDb {
         val userId = reference("userId", Users, onDelete = ReferenceOption.CASCADE)
         val taskListId = reference("taskListId", TaskLists, onDelete = ReferenceOption.CASCADE)
         val task = varchar("task", 50)
-        val description = varchar("description", 450)
-        val dueDate = date("dueDate")
+        val description = varchar("description", 450).nullable()
+        val dueDate = datetime("dueDate").nullable()
         val isDone = bool("isDone")
-        val priority = integer("priority")
+        val priority = integer("priority").nullable()
         val attachment = varchar("attachment", 150).nullable()
     }
 
