@@ -139,7 +139,7 @@ fun TaskView(taskId: Int, vm: DatabaseStateViewmodel = viewModel()) {
                                         .lowercase(Locale.ROOT)
 
                                 }
-                            }, ${it.year} ${if (it.hour != 0 && it.minute != 0) "${it.hour}:${it.minute}" else ""}"
+                            }, ${it.year} ${it.hour}:${it.minute}"
                         }
                             .toString(),
                         style = MaterialTheme.typography.bodyMedium,

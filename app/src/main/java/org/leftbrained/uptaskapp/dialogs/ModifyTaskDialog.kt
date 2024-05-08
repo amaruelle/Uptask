@@ -39,7 +39,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -51,7 +50,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,53 +59,48 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.R
 import org.leftbrained.uptaskapp.classes.AlarmReceiver
 import org.leftbrained.uptaskapp.classes.Checks
+import org.leftbrained.uptaskapp.classes.Checks.tagAddedCheck
 import org.leftbrained.uptaskapp.classes.Checks.tagCheck
+import org.leftbrained.uptaskapp.classes.Checks.tagExistsCheck
 import org.leftbrained.uptaskapp.classes.Logs
 import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.db.Tag
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.UserTask
 import org.leftbrained.uptaskapp.viewmodel.TaskViewModel
-import java.time.Duration
 import java.util.Locale
+import kotlin.time.Duration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModifyTaskDialog(
-    onDismissRequest: () -> Unit,
-    taskId: Int,
-    vm: DatabaseStateViewmodel = viewModel()
+    onDismissRequest: () -> Unit, taskId: Int, vm: DatabaseStateViewmodel = viewModel()
 ) {
     val scrollDateState = rememberScrollState()
     val scrollState = rememberScrollState()
     val reminderOptions = listOf(
         "None" to Duration.ZERO,
-        "5 minutes" to Duration.ofMinutes(5),
-        "10 minutes" to Duration.ofMinutes(10),
-        "15 minutes" to Duration.ofMinutes(15),
-        "30 minutes" to Duration.ofMinutes(30),
-        "1 hour" to Duration.ofHours(1),
-        "2 hours" to Duration.ofHours(2),
-        "1 day" to Duration.ofDays(1)
+        "5 minutes" to Duration.parse("5m"),
+        "10 minutes" to Duration.parse("10m"),
+        "15 minutes" to Duration.parse("15m"),
+        "30 minutes" to Duration.parse("30m"),
+        "1 hour" to Duration.parse("1h"),
+        "2 hours" to Duration.parse("2h"),
+        "4 hours" to Duration.parse("4h"),
+        "8 hours" to Duration.parse("8h"),
+        "1 day" to Duration.parse("1d")
     )
     var selectedReminder by remember { mutableStateOf(reminderOptions[0]) }
     var showReminderDropdown by remember { mutableStateOf(false) }
     val logs = Logs(LocalContext.current.getSharedPreferences("logs", Context.MODE_PRIVATE))
     val taskVm = remember { TaskViewModel() }
-    val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
     val task by remember(vm.databaseState) {
         derivedStateOf {
             transaction {
@@ -115,32 +108,19 @@ fun ModifyTaskDialog(
             }
         }
     }
-    val initialDate =
-        if (task.dueDate != null) task.dueDate!!.toInstant(TimeZone.UTC)
-            .toEpochMilliseconds() else Instant.fromEpochMilliseconds(
-            Clock.System.now().epochSeconds
-        ).toEpochMilliseconds()
-    val datePickerState =
-        rememberDatePickerState(
-            initialSelectedDateMillis = initialDate
-        )
-    val timePickerState = rememberTimePickerState(
-        if (task.dueDate == null) 0 else task.dueDate!!.time.hour,
-        if (task.dueDate == null) 0 else task.dueDate!!.time.minute
-    )
+    val datePickerState = rememberDatePickerState()
+    val timePickerState = rememberTimePickerState()
     var showTimePicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showExpandableTags by remember { mutableStateOf(false) }
-    var dueDate: LocalDateTime? by remember {
+    var dueDate: Instant? by remember {
         mutableStateOf(
-            Instant.fromEpochMilliseconds(
-                initialDate
-            ).toLocalDateTime(TimeZone.UTC)
+            null
         )
     }
-    var dueTime by remember { mutableStateOf(if (task.dueDate?.time.toString() == "null") "No time selected" else task.dueDate?.time.toString()) }
+    var dueTime by remember { mutableStateOf("") }
     val tags = remember {
-        mutableListOf<Tag>()
+        mutableListOf<String>()
     }
     val context = LocalContext.current
     var name by remember { mutableStateOf(task.task) }
@@ -180,8 +160,7 @@ fun ModifyTaskDialog(
                 )
                 Text(
                     text = stringResource(R.string.please_enter_values_task),
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                 )
                 OutlinedTextField(
@@ -208,8 +187,7 @@ fun ModifyTaskDialog(
                     OutlinedButton(
                         onClick = {
                             showDatePicker = true
-                        },
-                        modifier = Modifier.padding(top = 16.dp)
+                        }, modifier = Modifier.padding(top = 16.dp)
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -229,19 +207,14 @@ fun ModifyTaskDialog(
                     }
                 }
 
-                Text("${if (dueDate?.date == LocalDate.parse("1970-01-20") || dueDate?.date == null) "No date selected" else dueDate?.date}")
+                Text("${dueDate?.toLocalDateTime(TimeZone.currentSystemDefault())?.date ?: "No date selected"}")
                 if (showDatePicker) {
                     DatePickerDialog(
                         onDismissRequest = { showDatePicker = false },
                         confirmButton = {
                             if (datePickerState.selectedDateMillis == null) return@DatePickerDialog
-                            val hourInMillis = timePickerState.hour * 3600000
-                            val minuteInMillis = timePickerState.minute * 60000
-                            val totalMillis =
-                                hourInMillis + minuteInMillis + datePickerState.selectedDateMillis!!
-                            Instant.fromEpochMilliseconds(totalMillis).toLocalDateTime(TimeZone.UTC)
-                            dueDate = Instant.fromEpochMilliseconds(totalMillis)
-                                .toLocalDateTime(TimeZone.UTC)
+                            dueDate =
+                                Instant.fromEpochMilliseconds(datePickerState.selectedDateMillis!!)
                         }) {
                         Column(
                             Modifier
@@ -263,8 +236,7 @@ fun ModifyTaskDialog(
                     OutlinedButton(
                         onClick = {
                             showTimePicker = true
-                        },
-                        modifier = Modifier.padding(top = 16.dp)
+                        }, modifier = Modifier.padding(top = 16.dp)
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -321,10 +293,8 @@ fun ModifyTaskDialog(
                             .menuAnchor()
                             .fillMaxWidth()
                     )
-                    ExposedDropdownMenu(
-                        expanded = showReminderDropdown,
-                        onDismissRequest = { showReminderDropdown = false }
-                    ) {
+                    ExposedDropdownMenu(expanded = showReminderDropdown,
+                        onDismissRequest = { showReminderDropdown = false }) {
                         reminderOptions.forEach { reminder ->
                             DropdownMenuItem(text = {
                                 Text(reminder.first)
@@ -337,15 +307,12 @@ fun ModifyTaskDialog(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     for (tag in taskTags) {
-                        AssistChip(
-                            label = { Text(text = tag.tag) },
-                            onClick = {
-                                transaction {
-                                    tag.delete()
-                                }
-                                vm.databaseState++
-                            },
-                            modifier = Modifier.padding(end = 8.dp)
+                        AssistChip(label = { Text(text = tag.tag) }, onClick = {
+                            transaction {
+                                tag.delete()
+                            }
+                            vm.databaseState++
+                        }, modifier = Modifier.padding(end = 8.dp)
                         )
                     }
                 }
@@ -356,30 +323,24 @@ fun ModifyTaskDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp),
-                    label = { Text(stringResource(R.string.tag)) }, trailingIcon = {
+                    label = { Text(stringResource(R.string.tag)) },
+                    trailingIcon = {
                         IconButton(onClick = {
                             if (!tagCheck(tagEnter, context)) return@IconButton
-                            if (tags.find { it.tag == tagEnter } != null) {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        "Tag already added"
-                                    )
-                                }
-                                return@IconButton
-                            }
+                            if (!tagAddedCheck(tags, tagEnter, context)) return@IconButton
+                            if (!tagExistsCheck(tagEnter, context)) return@IconButton
                             transaction {
-                                val newTag = Tag.new {
+                                Tag.new {
                                     tag = tagEnter
                                     this.taskId = UserTask[taskId]
                                 }
-                                tags.add(newTag)
+                                tags.add(tagEnter)
                             }
                             tagEnter = ""
                             vm.databaseState++
                         }) {
                             Icon(
-                                imageVector = Icons.Rounded.Add,
-                                contentDescription = "Add tag icon"
+                                imageVector = Icons.Rounded.Add, contentDescription = "Add tag icon"
                             )
                         }
                     })
@@ -410,10 +371,9 @@ fun ModifyTaskDialog(
                             for (el in distinctTags) {
                                 item {
                                     AssistChip(onClick = {
-                                        tags.add(el.value.first())
+                                        tags.add(el.key)
                                         vm.databaseState++
-                                    }, label = { Text(el.key) },
-                                        Modifier.padding(end = 4.dp)
+                                    }, label = { Text(el.key) }, Modifier.padding(end = 4.dp)
                                     )
                                 }
                             }
@@ -430,53 +390,43 @@ fun ModifyTaskDialog(
                         if (!Checks.emptyCheck(name, context)) return@Button
                         if (!Checks.priorityCheck(priority, context)) return@Button
                         if (dueDate != null) {
-                            val hourInMillis = timePickerState.hour * 3600000
-                            val minuteInMillis = timePickerState.minute * 60000
-                            val totalMillis =
-                                hourInMillis + minuteInMillis + dueDate!!.toInstant(TimeZone.UTC)
-                                    .toEpochMilliseconds()
                             dueDate =
-                                Instant.fromEpochMilliseconds(totalMillis)
-                                    .toLocalDateTime(TimeZone.UTC)
-                            println("Total millis selected: $totalMillis")
+                                dueDate!! + Duration.parse("${timePickerState.hour}h ${timePickerState.minute}m")
+                            if (selectedReminder.second != Duration.ZERO) {
+                                val alarmManager =
+                                    context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                                val intent = Intent(context, AlarmReceiver::class.java)
+                                intent.putExtra("taskName", name)
+                                intent.putExtra("taskDesc", desc)
+                                intent.putExtra("taskDueDate",
+                                    dueDate!!.toLocalDateTime(TimeZone.UTC).let {
+                                        "${it.dayOfMonth} ${
+                                            it.month.name.let { name ->
+                                                name.substring(0, 1)
+                                                    .uppercase(Locale.ROOT) + name.substring(1)
+                                                    .lowercase(Locale.ROOT)
+                                            }
+                                        }, ${it.year} ${it.hour}:${it.minute}"
+                                    })
+                                val newTaskId = transaction { (UserTask.all().count() + 1).toInt() }
+                                val pendingIntent = PendingIntent.getBroadcast(
+                                    context, newTaskId, intent, PendingIntent.FLAG_IMMUTABLE
+                                )
+                                val reminderMillis = dueDate!! - selectedReminder.second
+                                if (alarmManager.canScheduleExactAlarms()) {
+                                    alarmManager.setExact(
+                                        AlarmManager.RTC_WAKEUP,
+                                        reminderMillis.toEpochMilliseconds(),
+                                        pendingIntent
+                                    )
+                                }
+                            }
                         }
                         transaction {
                             task.task = name
                             task.description = desc
-                            task.dueDate = dueDate
+                            task.dueDate = dueDate?.toLocalDateTime(TimeZone.UTC)
                             task.priority = priority
-                        }
-                        if (selectedReminder.second != Duration.ZERO) {
-                            val alarmManager =
-                                context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                            val intent = Intent(context, AlarmReceiver::class.java)
-                            intent.putExtra("taskName", name)
-                            intent.putExtra("taskDueDate", dueDate!!.let {
-                                "${it.dayOfMonth} ${
-                                    it.month.name.let { name ->
-                                        name.substring(0, 1)
-                                            .uppercase(Locale.ROOT) + name.substring(1)
-                                            .lowercase(Locale.ROOT)
-
-                                    }
-                                }, ${it.year} ${if (it.hour != 0 && it.minute != 0) "${it.hour}:${it.minute}" else ""}"
-                            })
-                            val newTaskId = transaction { (UserTask.all().count() + 1).toInt() }
-                            intent.putExtra("taskDesc", desc)
-                            val pendingIntent = PendingIntent.getBroadcast(
-                                context, newTaskId, intent,
-                                PendingIntent.FLAG_IMMUTABLE
-                            )
-                            val reminderMillis =
-                                dueDate!!.toInstant(TimeZone.currentSystemDefault())
-                                    .toEpochMilliseconds() - selectedReminder.second.toMillis()
-                            if (alarmManager.canScheduleExactAlarms()) {
-                                alarmManager.setExact(
-                                    AlarmManager.RTC_WAKEUP,
-                                    reminderMillis,
-                                    pendingIntent
-                                )
-                            }
                         }
                         onDismissRequest()
                         vm.databaseState++
@@ -484,8 +434,7 @@ fun ModifyTaskDialog(
                         Text(text = stringResource(R.string.modify))
                     }
                     OutlinedButton(
-                        onClick = { onDismissRequest() },
-                        modifier = Modifier.weight(1f)
+                        onClick = { onDismissRequest() }, modifier = Modifier.weight(1f)
                     ) {
                         Text(text = stringResource(R.string.cancel))
                     }
@@ -495,12 +444,10 @@ fun ModifyTaskDialog(
                             logs.deleteTaskLog(userId, task)
                             onDismissRequest()
                             vm.databaseState++
-                        },
-                        modifier = Modifier.width(36.dp)
+                        }, modifier = Modifier.width(36.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Delete,
-                            contentDescription = "Delete"
+                            imageVector = Icons.Rounded.Delete, contentDescription = "Delete"
                         )
                     }
                 }

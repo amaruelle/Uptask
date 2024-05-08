@@ -38,7 +38,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -49,7 +48,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,15 +57,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.R
 import org.leftbrained.uptaskapp.classes.AlarmReceiver
+import org.leftbrained.uptaskapp.classes.Checks
 import org.leftbrained.uptaskapp.classes.Checks.emptyCheck
 import org.leftbrained.uptaskapp.classes.Checks.priorityCheck
 import org.leftbrained.uptaskapp.classes.Checks.tagCheck
@@ -78,8 +74,8 @@ import org.leftbrained.uptaskapp.db.TaskList
 import org.leftbrained.uptaskapp.db.UserTask
 import org.leftbrained.uptaskapp.viewmodel.TagViewModel
 import org.leftbrained.uptaskapp.viewmodel.TaskViewModel
-import java.time.Duration
 import java.util.Locale
+import kotlin.time.Duration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,13 +84,15 @@ fun AddTaskDialog(
 ) {
     val reminderOptions = listOf(
         "None" to Duration.ZERO,
-        "5 minutes" to Duration.ofMinutes(5),
-        "10 minutes" to Duration.ofMinutes(10),
-        "15 minutes" to Duration.ofMinutes(15),
-        "30 minutes" to Duration.ofMinutes(30),
-        "1 hour" to Duration.ofHours(1),
-        "2 hours" to Duration.ofHours(2),
-        "1 day" to Duration.ofDays(1)
+        "5 minutes" to Duration.parse("5m"),
+        "10 minutes" to Duration.parse("10m"),
+        "15 minutes" to Duration.parse("15m"),
+        "30 minutes" to Duration.parse("30m"),
+        "1 hour" to Duration.parse("1h"),
+        "2 hours" to Duration.parse("2h"),
+        "4 hours" to Duration.parse("4h"),
+        "8 hours" to Duration.parse("8h"),
+        "1 day" to Duration.parse("1d")
     )
     var selectedReminder by remember { mutableStateOf(reminderOptions[0]) }
     var showReminderDropdown by remember { mutableStateOf(false) }
@@ -102,11 +100,9 @@ fun AddTaskDialog(
     val tagVm by remember { mutableStateOf(TagViewModel()) }
     var name by remember { mutableStateOf("My Task") }
     var desc by remember { mutableStateOf("My Description") }
-    val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
     val logs = Logs(LocalContext.current.getSharedPreferences("logs", Context.MODE_PRIVATE))
     var showExpandableTags by remember { mutableStateOf(false) }
-    var dueDate: LocalDateTime? by remember {
+    var dueDate: Instant? by remember {
         mutableStateOf(
             null
         )
@@ -197,24 +193,20 @@ fun AddTaskDialog(
                     }
                 }
 
-                Text("${dueDate?.date ?: "No date selected"}")
+                Text("${dueDate?.toLocalDateTime(TimeZone.currentSystemDefault())?.date ?: "No date selected"}")
                 if (showDatePicker) {
                     DatePickerDialog(
                         onDismissRequest = { showDatePicker = false },
                         confirmButton = {
                             if (datePickerState.selectedDateMillis == null) return@DatePickerDialog
-                            val hourInMillis = timePickerState.hour * 3600000
-                            val minuteInMillis = timePickerState.minute * 60000
-                            val totalMillis =
-                                hourInMillis + minuteInMillis + datePickerState.selectedDateMillis!!
-                            Instant.fromEpochMilliseconds(totalMillis).toLocalDateTime(TimeZone.UTC)
-                            dueDate = Instant.fromEpochMilliseconds(totalMillis)
-                                .toLocalDateTime(TimeZone.UTC)
+                            dueDate =
+                                Instant.fromEpochMilliseconds(datePickerState.selectedDateMillis!!)
                         }) {
                         Column(
                             Modifier
                                 .padding(16.dp)
-                                .verticalScroll(scrollDateState)) {
+                                .verticalScroll(scrollDateState)
+                        ) {
                             DatePicker(
                                 state = datePickerState
                             )
@@ -321,14 +313,8 @@ fun AddTaskDialog(
                     trailingIcon = {
                         IconButton(onClick = {
                             if (!tagCheck(tagEnter, context)) return@IconButton
-                            if (tags.find { it == tagEnter } != null) {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        "Tag already added"
-                                    )
-                                }
-                                return@IconButton
-                            }
+                            if (!Checks.tagAddedCheck(tags, tagEnter, context)) return@IconButton
+                            if (!Checks.tagExistsCheck(tagEnter, context)) return@IconButton
                             transaction {
                                 tags.add(tagEnter)
                             }
@@ -390,42 +376,35 @@ fun AddTaskDialog(
                         if (!emptyCheck(name, context)) return@Button
                         if (!priorityCheck(priority, context)) return@Button
                         if (dueDate != null) {
-                            val hourInMillis = timePickerState.hour * 3600000
-                            val minuteInMillis = timePickerState.minute * 60000
-                            val totalMillis =
-                                hourInMillis + minuteInMillis + dueDate!!.toInstant(TimeZone.UTC)
-                                    .toEpochMilliseconds()
                             dueDate =
-                                Instant.fromEpochMilliseconds(totalMillis)
-                                    .toLocalDateTime(TimeZone.UTC)
+                                dueDate!! + Duration.parse("${timePickerState.hour}h ${timePickerState.minute}m")
                             if (selectedReminder.second != Duration.ZERO) {
                                 val alarmManager =
                                     context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                                 val intent = Intent(context, AlarmReceiver::class.java)
                                 intent.putExtra("taskName", name)
-                                intent.putExtra("taskDueDate", dueDate!!.let {
+                                intent.putExtra("taskDesc", desc)
+                                intent.putExtra(
+                                    "taskDueDate",
+                                    dueDate!!.toLocalDateTime(TimeZone.UTC).let {
                                     "${it.dayOfMonth} ${
                                         it.month.name.let { name ->
                                             name.substring(0, 1)
                                                 .uppercase(Locale.ROOT) + name.substring(1)
                                                 .lowercase(Locale.ROOT)
-
                                         }
-                                    }, ${it.year} ${if (it.hour != 0 && it.minute != 0) "${it.hour}:${it.minute}" else ""}"
+                                    }, ${it.year} ${it.hour}:${it.minute}"
                                 })
-                                intent.putExtra("taskDesc", desc)
                                 val newTaskId = transaction { (UserTask.all().count() + 1).toInt() }
                                 val pendingIntent = PendingIntent.getBroadcast(
                                     context, newTaskId, intent,
                                     PendingIntent.FLAG_IMMUTABLE
                                 )
-                                val reminderMillis =
-                                    dueDate!!.toInstant(TimeZone.currentSystemDefault())
-                                        .toEpochMilliseconds() - selectedReminder.second.toMillis()
+                                val reminderMillis = dueDate!! - selectedReminder.second
                                 if (alarmManager.canScheduleExactAlarms()) {
                                     alarmManager.setExact(
                                         AlarmManager.RTC_WAKEUP,
-                                        reminderMillis,
+                                        reminderMillis.toEpochMilliseconds(),
                                         pendingIntent
                                     )
                                 }
@@ -435,7 +414,7 @@ fun AddTaskDialog(
                             taskVm.newTask(
                                 name,
                                 desc,
-                                dueDate,
+                                dueDate?.toLocalDateTime(TimeZone.UTC),
                                 priority,
                                 taskList,
                                 userId

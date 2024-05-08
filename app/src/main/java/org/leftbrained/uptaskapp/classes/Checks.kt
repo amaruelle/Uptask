@@ -3,7 +3,10 @@ package org.leftbrained.uptaskapp.classes
 import android.app.Activity
 import android.content.Context
 import android.widget.Toast
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.R
+import org.leftbrained.uptaskapp.db.Tag
+import org.leftbrained.uptaskapp.db.UptaskDb
 
 object Checks {
     fun emptyCheck(
@@ -38,6 +41,34 @@ object Checks {
             Toast.makeText(
                 context,
                 "Tag can't be empty",
+                Toast.LENGTH_SHORT
+            ).show()
+            return false
+        }
+        return true
+    }
+
+    fun tagExistsCheck(tag: String, context: Context): Boolean {
+        if (transaction {
+                Tag.find {
+                    UptaskDb.TaskTags.tag eq tag
+                }.toList().isNotEmpty()
+            }) {
+            Toast.makeText(
+                context,
+                "Tag already exists",
+                Toast.LENGTH_SHORT
+            ).show()
+            return false
+        }
+        return true
+    }
+
+    fun tagAddedCheck(tags: MutableList<String>, tag: String, context: Context): Boolean {
+        if (tags.contains(tag)) {
+            Toast.makeText(
+                context,
+                "Tag already added",
                 Toast.LENGTH_SHORT
             ).show()
             return false
