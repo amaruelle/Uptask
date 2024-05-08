@@ -1,19 +1,27 @@
 package org.leftbrained.uptaskapp
 
-import android.app.Activity
-import android.content.Intent
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,18 +33,23 @@ import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.components.UnorderedList
-import org.leftbrained.uptaskapp.db.UserTask
 import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.nav.GeneralNav
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
-import org.leftbrained.uptaskapp.viewmodel.TaskViewModel
 
 class MainActivity : ComponentActivity() {
-    private val sharedViewModel: TaskViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val name = "Reminders"
+        val descriptionText = "Channel for Reminders"
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel("reminders", name, importance).apply {
+            description = descriptionText
+        }
+        val notificationManager: NotificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
         setContent {
             AppTheme {
                 Surface(
@@ -53,39 +66,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun WelcomeScreen(navController: NavController) {
     connectToDb()
-//    transaction {
-//        if (User.findById(1) == null) {
-//            User.new {
-//                login = "testLogin"
-//                password = "testPassword"
-//            }
-//        }
-//    }
-//    transaction {
-//        if (TaskList.findById(1) == null) {
-//            TaskList.new {
-//                userId = User.findById(1)!!
-//                name = "testList"
-//                emoji = "testEmoji"
-//            }
-//        }
-//    }
-    transaction {
-//        val currentMoment: Instant = Clock.System.now()
-//        val datetimeInSystemZone: LocalDateTime = currentMoment.toLocalDateTime(TimeZone.currentSystemDefault())
-//        val localDate = datetimeInSystemZone.date
-//        if (UserTask.findById(1) == null) {
-//            UserTask.new {
-//                userId = User.findById(1)!!
-//                taskListId = TaskList.findById(1)!!
-//                task = "testTask"
-//                description = "testDescription"
-//                dueDate = localDate
-//                isDone = false
-//                priority = 3
-//            }
-//        }
-    }
     Column(
         Modifier.padding(horizontal = 24.dp, vertical = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally

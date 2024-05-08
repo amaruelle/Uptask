@@ -1,7 +1,9 @@
 package org.leftbrained.uptaskapp.dialogs
 
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
-import androidx.compose.material3.TimePicker
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,16 +27,21 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -60,6 +67,7 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.R
+import org.leftbrained.uptaskapp.classes.AlarmReceiver
 import org.leftbrained.uptaskapp.classes.Checks.emptyCheck
 import org.leftbrained.uptaskapp.classes.Checks.priorityCheck
 import org.leftbrained.uptaskapp.classes.Checks.tagCheck
@@ -70,12 +78,26 @@ import org.leftbrained.uptaskapp.db.TaskList
 import org.leftbrained.uptaskapp.db.UserTask
 import org.leftbrained.uptaskapp.viewmodel.TagViewModel
 import org.leftbrained.uptaskapp.viewmodel.TaskViewModel
+import java.time.Duration
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddTaskDialog(
     onDismissRequest: () -> Unit, taskList: TaskList, vm: DatabaseStateViewmodel = viewModel()
 ) {
+    val reminderOptions = listOf(
+        "None" to Duration.ZERO,
+        "5 minutes" to Duration.ofMinutes(5),
+        "10 minutes" to Duration.ofMinutes(10),
+        "15 minutes" to Duration.ofMinutes(15),
+        "30 minutes" to Duration.ofMinutes(30),
+        "1 hour" to Duration.ofHours(1),
+        "2 hours" to Duration.ofHours(2),
+        "1 day" to Duration.ofDays(1)
+    )
+    var selectedReminder by remember { mutableStateOf(reminderOptions[0]) }
+    var showReminderDropdown by remember { mutableStateOf(false) }
     val taskVm by remember { mutableStateOf(TaskViewModel()) }
     val tagVm by remember { mutableStateOf(TagViewModel()) }
     var name by remember { mutableStateOf("My Task") }
@@ -100,6 +122,7 @@ fun AddTaskDialog(
     var tagEnter by remember { mutableStateOf("") }
     val userId = transaction { taskList.userId }
     val scrollState = rememberScrollState()
+    val scrollDateState = rememberScrollState()
     val datePickerState = rememberDatePickerState()
     val timePickerState = rememberTimePickerState()
     var showTimePicker by remember { mutableStateOf(false) }
@@ -108,7 +131,7 @@ fun AddTaskDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .height(400.dp),
+                .height(600.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
             Column(
@@ -156,7 +179,10 @@ fun AddTaskDialog(
                         },
                         modifier = Modifier.padding(top = 16.dp)
                     ) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(
                                 imageVector = Icons.Rounded.DateRange,
                                 contentDescription = "Due date icon"
@@ -185,7 +211,10 @@ fun AddTaskDialog(
                             dueDate = Instant.fromEpochMilliseconds(totalMillis)
                                 .toLocalDateTime(TimeZone.UTC)
                         }) {
-                        Column(Modifier.padding(16.dp)) {
+                        Column(
+                            Modifier
+                                .padding(16.dp)
+                                .verticalScroll(scrollDateState)) {
                             DatePicker(
                                 state = datePickerState
                             )
@@ -202,9 +231,12 @@ fun AddTaskDialog(
                         onClick = {
                             showTimePicker = true
                         },
-                        modifier = Modifier.padding(top = 16.dp)
+                        modifier = Modifier.padding(top = 16.dp),
                     ) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(
                                 imageVector = Icons.Rounded.AccessTime,
                                 contentDescription = "Due time icon"
@@ -218,7 +250,10 @@ fun AddTaskDialog(
                         Text(text = "Clear")
                     }
                 }
-                Text(if (dueTime == "") "No time selected" else dueTime)
+                Text(
+                    if (dueTime == "") "No time selected" else dueTime,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
                 if (showTimePicker) {
                     Dialog(onDismissRequest = { showTimePicker = false }) {
                         Card {
@@ -234,6 +269,36 @@ fun AddTaskDialog(
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+                ExposedDropdownMenuBox(
+                    expanded = showReminderDropdown,
+                    onExpandedChange = { showReminderDropdown = !showReminderDropdown }) {
+                    OutlinedTextField(
+                        readOnly = true,
+                        value = selectedReminder.first,
+                        onValueChange = {},
+                        label = { Text(text = "Reminder") },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = showReminderDropdown)
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(),
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = showReminderDropdown,
+                        onDismissRequest = { showReminderDropdown = false }
+                    ) {
+                        reminderOptions.forEach { reminder ->
+                            DropdownMenuItem(text = {
+                                Text(reminder.first)
+                            }, onClick = {
+                                selectedReminder = reminder
+                                showReminderDropdown = false
+                            })
                         }
                     }
                 }
@@ -292,7 +357,7 @@ fun AddTaskDialog(
                             showExpandableTags = !showExpandableTags
                         }
                         .padding(top = 12.dp, bottom = 6.dp)) {
-                    Text("Click to select existing")
+                    Text("Click to select existing tags")
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                         contentDescription = "Add tag icon"
@@ -328,11 +393,43 @@ fun AddTaskDialog(
                             val hourInMillis = timePickerState.hour * 3600000
                             val minuteInMillis = timePickerState.minute * 60000
                             val totalMillis =
-                                hourInMillis + minuteInMillis + dueDate!!.toInstant(TimeZone.UTC).toEpochMilliseconds()
+                                hourInMillis + minuteInMillis + dueDate!!.toInstant(TimeZone.UTC)
+                                    .toEpochMilliseconds()
                             dueDate =
                                 Instant.fromEpochMilliseconds(totalMillis)
                                     .toLocalDateTime(TimeZone.UTC)
-                            println("Total millis selected: $totalMillis")
+                            if (selectedReminder.second != Duration.ZERO) {
+                                val alarmManager =
+                                    context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                                val intent = Intent(context, AlarmReceiver::class.java)
+                                intent.putExtra("taskName", name)
+                                intent.putExtra("taskDueDate", dueDate!!.let {
+                                    "${it.dayOfMonth} ${
+                                        it.month.name.let { name ->
+                                            name.substring(0, 1)
+                                                .uppercase(Locale.ROOT) + name.substring(1)
+                                                .lowercase(Locale.ROOT)
+
+                                        }
+                                    }, ${it.year} ${if (it.hour != 0 && it.minute != 0) "${it.hour}:${it.minute}" else ""}"
+                                })
+                                intent.putExtra("taskDesc", desc)
+                                val newTaskId = transaction { (UserTask.all().count() + 1).toInt() }
+                                val pendingIntent = PendingIntent.getBroadcast(
+                                    context, newTaskId, intent,
+                                    PendingIntent.FLAG_IMMUTABLE
+                                )
+                                val reminderMillis =
+                                    dueDate!!.toInstant(TimeZone.currentSystemDefault())
+                                        .toEpochMilliseconds() - selectedReminder.second.toMillis()
+                                if (alarmManager.canScheduleExactAlarms()) {
+                                    alarmManager.setExact(
+                                        AlarmManager.RTC_WAKEUP,
+                                        reminderMillis,
+                                        pendingIntent
+                                    )
+                                }
+                            }
                         }
                         transaction {
                             taskVm.newTask(
