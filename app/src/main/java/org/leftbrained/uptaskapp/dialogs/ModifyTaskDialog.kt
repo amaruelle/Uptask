@@ -86,16 +86,16 @@ fun ModifyTaskDialog(
     val scrollDateState = rememberScrollState()
     val scrollState = rememberScrollState()
     val reminderOptions = listOf(
-        "None" to Duration.ZERO,
-        "5 minutes" to Duration.parse("5m"),
-        "10 minutes" to Duration.parse("10m"),
-        "15 minutes" to Duration.parse("15m"),
-        "30 minutes" to Duration.parse("30m"),
-        "1 hour" to Duration.parse("1h"),
-        "2 hours" to Duration.parse("2h"),
-        "4 hours" to Duration.parse("4h"),
-        "8 hours" to Duration.parse("8h"),
-        "1 day" to Duration.parse("1d")
+        stringResource(R.string.none) to Duration.ZERO,
+        stringResource(R.string._5_minutes) to Duration.parse("5m"),
+        stringResource(R.string._10_minutes) to Duration.parse("10m"),
+        stringResource(R.string._15_minutes) to Duration.parse("15m"),
+        stringResource(R.string._30_minutes) to Duration.parse("30m"),
+        stringResource(R.string._1_hour) to Duration.parse("1h"),
+        stringResource(R.string._2_hours) to Duration.parse("2h"),
+        stringResource(R.string._4_hours) to Duration.parse("4h"),
+        stringResource(R.string._8_hours) to Duration.parse("8h"),
+        stringResource(R.string._1_day) to Duration.parse("1d")
     )
     var selectedReminder by remember { mutableStateOf(reminderOptions[0]) }
     var showReminderDropdown by remember { mutableStateOf(false) }
@@ -182,7 +182,7 @@ fun ModifyTaskDialog(
                     steps = 5,
                     modifier = Modifier.padding(top = 16.dp),
                 )
-                Text("Priority: $priority")
+                Text(stringResource(R.string.priority_label, priority))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedButton(
                         onClick = {
@@ -197,17 +197,23 @@ fun ModifyTaskDialog(
                                 imageVector = Icons.Rounded.DateRange,
                                 contentDescription = "Due date icon"
                             )
-                            Text("Select due date")
+                            Text(stringResource(R.string.select_due_date))
                         }
                     }
                     TextButton(onClick = {
                         dueDate = null
                     }) {
-                        Text(text = "Clear")
+                        Text(stringResource(R.string.clear))
                     }
                 }
 
-                Text("${dueDate?.toLocalDateTime(TimeZone.currentSystemDefault())?.date ?: "No date selected"}")
+                Text(
+                    "${
+                        dueDate?.toLocalDateTime(TimeZone.currentSystemDefault())?.date ?: stringResource(
+                            R.string.no_date_selected
+                        )
+                    }"
+                )
                 if (showDatePicker) {
                     DatePickerDialog(
                         onDismissRequest = { showDatePicker = false },
@@ -227,7 +233,7 @@ fun ModifyTaskDialog(
                             Button(onClick = {
                                 showDatePicker = false
                             }) {
-                                Text("Confirm")
+                                Text(stringResource(R.string.confirm))
                             }
                         }
                     }
@@ -246,17 +252,17 @@ fun ModifyTaskDialog(
                                 imageVector = Icons.Rounded.AccessTime,
                                 contentDescription = "Due time icon"
                             )
-                            Text("Select due time")
+                            Text(stringResource(R.string.select_due_time))
                         }
                     }
                     TextButton(onClick = {
                         dueTime = ""
                     }) {
-                        Text(text = "Clear")
+                        Text(stringResource(R.string.clear))
                     }
                 }
                 Text(
-                    if (dueTime == "") "No time selected" else dueTime,
+                    if (dueTime == "") stringResource(R.string.no_time_selected) else dueTime,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
                 if (showTimePicker) {
@@ -270,7 +276,7 @@ fun ModifyTaskDialog(
                                             "${timePickerState.hour}:${timePickerState.minute}"
                                         showTimePicker = false
                                     }) {
-                                        Text("Confirm")
+                                        Text(stringResource(R.string.confirm))
                                     }
                                 }
                             }
@@ -284,7 +290,7 @@ fun ModifyTaskDialog(
                         readOnly = true,
                         value = selectedReminder.first,
                         onValueChange = {},
-                        label = { Text(text = "Reminder") },
+                        label = { Text(stringResource(R.string.reminder)) },
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = showReminderDropdown)
                         },
@@ -345,7 +351,10 @@ fun ModifyTaskDialog(
                         }
                     })
                 Row(Modifier.padding(top = 12.dp)) {
-                    AssistChip(onClick = {}, label = { Text("Pick attachment") }, leadingIcon = {
+                    AssistChip(
+                        onClick = {},
+                        label = { Text(stringResource(R.string.pick_attachment)) },
+                        leadingIcon = {
                         Icon(
                             imageVector = Icons.Rounded.AddCircle,
                             contentDescription = "Add attachment icon"
@@ -358,7 +367,7 @@ fun ModifyTaskDialog(
                             showExpandableTags = !showExpandableTags
                         }
                         .padding(top = 12.dp, bottom = 6.dp)) {
-                    Text("Click to select existing tags")
+                    Text(stringResource(R.string.click_to_select_existing_tags))
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
                         contentDescription = "Add tag icon"

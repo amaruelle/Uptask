@@ -1,10 +1,23 @@
 package org.leftbrained.uptaskapp.dialogs
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -68,7 +81,7 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
                         if (name == "" || emoji == "") {
                             Toast.makeText(
                                 context,
-                                "Name or emoji can't be empty",
+                                context.getString(R.string.name_emoji_empty),
                                 Toast.LENGTH_SHORT
                             ).show()
                             return@Button

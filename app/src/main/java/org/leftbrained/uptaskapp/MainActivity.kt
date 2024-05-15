@@ -121,6 +121,7 @@ fun WelcomeScreen(navController: NavController) {
             UnorderedList(stringResource(R.string.create_edit_remove_task_lists))
             UnorderedList(stringResource(R.string.add_delete_edit_tasks_from_your_lists))
             UnorderedList(stringResource(R.string.add_tags_and_due_dates))
+            UnorderedList(stringResource(R.string.create_reminders))
         }
     }
 }

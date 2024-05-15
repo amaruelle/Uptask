@@ -1,6 +1,5 @@
 package org.leftbrained.uptaskapp
 
-import android.app.Activity
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -13,11 +12,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material3.Button
 import androidx.compose.material3.DateRangePicker
-import androidx.compose.material3.DateRangePickerState
-import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,23 +30,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.classes.Stats
-import org.leftbrained.uptaskapp.db.UptaskDb
-import org.leftbrained.uptaskapp.db.UserTask
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,14 +48,14 @@ fun StatsActivity(navController: NavController, userId: Int) {
     var currentStats by remember { mutableStateOf(Stats()) }
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Stats") }, navigationIcon = {
+            TopAppBar(title = { Text(stringResource(R.string.stats)) }, navigationIcon = {
                 IconButton(
                     onClick = {
                         navController.navigate("taskList/$userId")
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.KeyboardArrowLeft,
+                        imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
                         contentDescription = "Back icon"
                     )
                 }
@@ -111,26 +100,26 @@ fun StatsActivity(navController: NavController, userId: Int) {
                 },
                 modifier = Modifier.padding(8.dp)
             ) {
-                Text("Apply")
+                Text(stringResource(R.string.apply))
             }
-
-            Text(
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth(),
-                text = "Stats for the period",
-                style = MaterialTheme.typography.titleLarge
-            )
-            Text(
-                "Total tasks added: ${currentStats.totalTasks}"
-            )
-            Text(
-                "Total tasks completed: ${currentStats.completedTasks}"
-            )
-            Text(
-                "Total tasks undone: ${currentStats.undoneTasks}"
-            )
+            Column(Modifier.padding(16.dp)) {
+                Text(
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    text = stringResource(R.string.stats_period),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    stringResource(R.string.total_tasks_added, currentStats.totalTasks)
+                )
+                Text(
+                    stringResource(R.string.total_tasks_completed, currentStats.completedTasks)
+                )
+                Text(
+                    stringResource(R.string.total_tasks_undone, currentStats.undoneTasks)
+                )
+            }
         }
     }
 }

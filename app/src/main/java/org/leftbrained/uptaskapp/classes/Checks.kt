@@ -16,7 +16,7 @@ object Checks {
         if (name == "") {
             Toast.makeText(
                 context,
-                "Empty values not allowed",
+                context.getString(R.string.empty_not_allowed),
                 Toast.LENGTH_SHORT
             ).show()
             return false
@@ -28,7 +28,7 @@ object Checks {
         if (!priority.toString().matches(Regex("[0-5]"))) {
             Toast.makeText(
                 context,
-                "Priority must be between 0 and 5",
+                context.getString(R.string.priority_between),
                 Toast.LENGTH_SHORT
             ).show()
             return false
@@ -40,7 +40,7 @@ object Checks {
         if (tag == "") {
             Toast.makeText(
                 context,
-                "Tag can't be empty",
+                context.getString(R.string.tag_empty),
                 Toast.LENGTH_SHORT
             ).show()
             return false
@@ -56,7 +56,7 @@ object Checks {
             }) {
             Toast.makeText(
                 context,
-                "Tag already exists",
+                context.getString(R.string.tag_already_exists),
                 Toast.LENGTH_SHORT
             ).show()
             return false
@@ -68,7 +68,7 @@ object Checks {
         if (tags.contains(tag)) {
             Toast.makeText(
                 context,
-                "Tag already added",
+                context.getString(R.string.tag_already_added),
                 Toast.LENGTH_SHORT
             ).show()
             return false
