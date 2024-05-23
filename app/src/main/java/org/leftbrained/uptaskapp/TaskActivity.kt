@@ -15,11 +15,13 @@ import androidx.navigation.NavController
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.classes.Exporter
 import org.leftbrained.uptaskapp.components.TaskView
 import org.leftbrained.uptaskapp.db.*
 import org.leftbrained.uptaskapp.dialogs.AddTaskDialog
 import org.leftbrained.uptaskapp.dialogs.FilterSortDialog
 import org.leftbrained.uptaskapp.dialogs.SettingsDialog
+import org.leftbrained.uptaskapp.viewmodel.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,18 +86,6 @@ fun TaskActivity(
             IconButton(onClick = { showFilter = !showFilter }) {
                 Icon(
                     imageVector = Icons.Rounded.FilterAlt, contentDescription = "Filter icon"
-                )
-            }
-            IconButton(
-                onClick = {
-                    navController.navigate(
-                        "user/$userId"
-                    )
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.AccountCircle,
-                    contentDescription = "Profile tab"
                 )
             }
         }, colors = TopAppBarDefaults.largeTopAppBarColors(

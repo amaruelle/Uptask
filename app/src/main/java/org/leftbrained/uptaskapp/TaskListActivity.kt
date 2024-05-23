@@ -2,6 +2,8 @@ package org.leftbrained.uptaskapp
 
 import android.app.Activity
 import android.content.Context
+import android.os.Environment
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -11,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.DateRange
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.BottomAppBar
@@ -39,13 +42,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.classes.Exporter
 import org.leftbrained.uptaskapp.components.TaskListRow
 import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.db.TaskList
 import org.leftbrained.uptaskapp.db.UptaskDb
+import org.leftbrained.uptaskapp.db.User
 import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.dialogs.AddTaskListDialog
 import org.leftbrained.uptaskapp.dialogs.SettingsDialog
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,6 +66,7 @@ fun TaskListActivity(
     LaunchedEffect(null) {
         println(userId)
     }
+    val context = LocalContext.current
     var showAddDialog by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     val activity = LocalContext.current as Activity
@@ -74,7 +83,10 @@ fun TaskListActivity(
             title = {
                 Column {
                     Text("Uptask", style = MaterialTheme.typography.titleLarge)
-                    Text(text = stringResource(R.string.task_lists), style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        text = stringResource(R.string.task_lists),
+                        style = MaterialTheme.typography.labelMedium
+                    )
                 }
             },
             navigationIcon = {
@@ -116,6 +128,32 @@ fun TaskListActivity(
                     Icon(
                         imageVector = Icons.Rounded.Person,
                         contentDescription = "Profile tab"
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        val exporter = Exporter()
+                        val exported =
+                            transaction { exporter.dataToMarkdown(User.findById(userId)!!.login) }
+                        val documentsDir =
+                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                        val file = File(documentsDir, "uptask_export_data.txt")
+
+                        val fileOutputStream = FileOutputStream(file)
+                        val outputStreamWriter = OutputStreamWriter(fileOutputStream)
+
+                        outputStreamWriter.write(exported)
+                        outputStreamWriter.close()
+                        Toast.makeText(
+                            context,
+                            "Data exported to file in the Documents folder",
+                            Toast.LENGTH_LONG
+                        ).show(
+                        )
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Download, contentDescription = "Download icon"
                     )
                 }
             }
