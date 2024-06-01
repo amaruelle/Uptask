@@ -1,8 +1,9 @@
-package org.leftbrained.uptaskapp
+package org.leftbrained.uptaskapp.ui.screens
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -33,7 +34,11 @@ import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.R
+import org.leftbrained.uptaskapp.classes.Exporter
 import org.leftbrained.uptaskapp.components.UnorderedList
+import org.leftbrained.uptaskapp.db.User
 import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.nav.GeneralNav
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
@@ -123,17 +128,5 @@ fun WelcomeScreen(navController: NavController) {
             UnorderedList(stringResource(R.string.add_tags_and_due_dates))
             UnorderedList(stringResource(R.string.create_reminders))
         }
-    }
-}
-
-@Preview(
-    showBackground = true, device = "id:pixel_7_pro", showSystemUi = true,
-    uiMode = Configuration.UI_MODE_NIGHT_NO or Configuration.UI_MODE_TYPE_NORMAL,
-    wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE
-)
-@Composable
-fun MainActivityPreview() {
-    AppTheme {
-        WelcomeScreen(rememberNavController())
     }
 }

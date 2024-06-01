@@ -35,12 +35,12 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.Logs
+import org.leftbrained.uptaskapp.other.Logs
 import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.db.Tag
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.UserTask
-import org.leftbrained.uptaskapp.dialogs.ModifyTaskDialog
+import org.leftbrained.uptaskapp.ui.dialogs.ModifyTaskDialog
 import java.util.Locale
 
 @Composable

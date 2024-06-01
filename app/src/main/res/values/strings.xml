@@ -89,4 +89,10 @@
     <string name="_1_day">1 day</string>
     <string name="stats">Stats</string>
     <string name="none">None</string>
+    <string name="is_sure">If you\'re sure, press again</string>
+    <string name="no_date_period_selected">No date period selected</string>
+    <string name="copy">Copy</string>
+    <string name="click_copy">Click copy to save it to your clipboard</string>
+    <string name="here_is_your_export">Here is your export</string>
+    <string name="info_changed">Info has been changed</string>
 </resources>

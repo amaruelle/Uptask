@@ -1,6 +1,7 @@
-package org.leftbrained.uptaskapp
+package org.leftbrained.uptaskapp.ui.screens
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,15 +31,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.leftbrained.uptaskapp.classes.Stats
+import org.leftbrained.uptaskapp.R
+import org.leftbrained.uptaskapp.other.Stats
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +78,7 @@ fun StatsActivity(navController: NavController, userId: Int) {
             Row(
                 Modifier
                     .height(500.dp)
-                    .padding(8.dp)
+                    .padding(24.dp)
                     .background(
                         color = MaterialTheme.colorScheme.surfaceVariant,
                         shape = RoundedCornerShape(8.dp)
@@ -82,11 +86,20 @@ fun StatsActivity(navController: NavController, userId: Int) {
                     .padding(8.dp)
             ) {
                 DateRangePicker(
-                    state = pickerState
+                    state = pickerState,
+                    modifier = Modifier.height(400.dp)
                 )
             }
             Button(
                 onClick = {
+                    if (pickerState.selectedStartDateMillis == null || pickerState.selectedEndDateMillis == null) {
+                        Toast.makeText(
+                            navController.context,
+                            navController.context.getString(R.string.no_date_period_selected),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@Button
+                    }
                     val startDate =
                         Instant.fromEpochMilliseconds(pickerState.selectedStartDateMillis!!)
                             .toLocalDateTime(
@@ -98,17 +111,26 @@ fun StatsActivity(navController: NavController, userId: Int) {
                         )
                     currentStats = currentStats.checkStats(sharedPref, startDate, endDate, userId)
                 },
-                modifier = Modifier.padding(8.dp)
+                modifier = Modifier.padding(start = 24.dp)
             ) {
                 Text(stringResource(R.string.apply))
             }
-            Column(Modifier.padding(16.dp)) {
+            Column(
+                Modifier
+                    .padding(16.dp)
+                    .background(
+                        MaterialTheme.colorScheme.tertiaryContainer,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .padding(16.dp)) {
                 Text(
-                    textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
                     text = stringResource(R.string.stats_period),
-                    style = MaterialTheme.typography.titleLarge
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.tertiary
                 )
                 Text(
                     stringResource(R.string.total_tasks_added, currentStats.totalTasks)

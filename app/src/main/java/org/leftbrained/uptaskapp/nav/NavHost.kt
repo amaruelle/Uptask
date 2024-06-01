@@ -13,9 +13,15 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.*
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.connectToDb
+import org.leftbrained.uptaskapp.ui.screens.AuthActivity
+import org.leftbrained.uptaskapp.ui.screens.RegisterActivity
+import org.leftbrained.uptaskapp.ui.screens.StatsActivity
+import org.leftbrained.uptaskapp.ui.screens.TaskActivity
+import org.leftbrained.uptaskapp.ui.screens.TaskListActivity
+import org.leftbrained.uptaskapp.ui.screens.UserActivity
+import org.leftbrained.uptaskapp.ui.screens.WelcomeScreen
 
 @Composable
 fun GeneralNav() {

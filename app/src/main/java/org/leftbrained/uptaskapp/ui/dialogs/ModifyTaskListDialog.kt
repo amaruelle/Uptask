@@ -1,23 +1,12 @@
-package org.leftbrained.uptaskapp.dialogs
+package org.leftbrained.uptaskapp.ui.dialogs
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -29,14 +18,21 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.R
 import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.db.TaskList
-import org.leftbrained.uptaskapp.db.User
-import org.leftbrained.uptaskapp.db.connectToDb
+import org.leftbrained.uptaskapp.db.UptaskDb
 
 @Composable
-fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseStateViewmodel = viewModel()) {
-    var name by remember { mutableStateOf("") }
-    var emoji by remember { mutableStateOf("") }
+fun ModifyTaskListDialog(onDismissRequest: () -> Unit, taskListId: Int, vm: DatabaseStateViewmodel = viewModel()) {
+    val taskList by remember(vm.databaseState) {
+        derivedStateOf {
+            transaction {
+                TaskList.find { UptaskDb.TaskLists.id eq taskListId }.elementAt(0)
+            }
+        }
+    }
     val context = LocalContext.current
+    var name by remember { mutableStateOf(taskList.name) }
+    var emoji by remember { mutableStateOf(taskList.emoji) }
+
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier
@@ -46,7 +42,7 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
         ) {
             Column(Modifier.padding(16.dp)) {
                 Text(
-                    text = stringResource(R.string.add_task_list),
+                    text = stringResource(R.string.modify_task_list),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier
                         .padding(bottom = 16.dp)
@@ -54,7 +50,7 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = stringResource(R.string.enter_values_task_list),
+                    text = stringResource(R.string.please_enter_values_task_list),
                     modifier = Modifier
                         .fillMaxWidth(),
                     textAlign = TextAlign.Center,
@@ -63,13 +59,13 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(stringResource(R.string.name)) },
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier.padding(top = 16.dp).fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = emoji,
                     onValueChange = { emoji = it },
                     label = { Text(stringResource(R.string.emoji)) },
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier.padding(top = 16.dp).fillMaxWidth()
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -86,20 +82,35 @@ fun AddTaskListDialog(onDismissRequest: () -> Unit, userId: Int, vm: DatabaseSta
                             ).show()
                             return@Button
                         }
-                        connectToDb()
                         transaction {
-                            TaskList.new { this.name = name; this.emoji = emoji; this.userId = User.findById(userId)!! }
+                            taskList.name = name
+                            taskList.emoji = emoji
                         }
                         vm.databaseState++
                         onDismissRequest()
                     }, modifier = Modifier.weight(1f)) {
-                        Text(text = stringResource(R.string.add))
+                        Text(text = stringResource(R.string.modify))
                     }
                     OutlinedButton(
                         onClick = { onDismissRequest() },
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(text = stringResource(R.string.cancel))
+                    }
+                    IconButton(
+                        onClick = {
+                            transaction {
+                                taskList.delete()
+                            }
+                            onDismissRequest()
+                            vm.databaseState++
+                        },
+                        modifier = Modifier.width(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Delete,
+                            contentDescription = "Delete"
+                        )
                     }
                 }
             }

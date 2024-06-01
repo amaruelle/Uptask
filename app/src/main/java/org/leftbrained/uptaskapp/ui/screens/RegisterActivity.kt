@@ -1,9 +1,10 @@
-package org.leftbrained.uptaskapp
+package org.leftbrained.uptaskapp.ui.screens
 
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,7 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.db.UptaskDb
+import org.leftbrained.uptaskapp.R
 import org.leftbrained.uptaskapp.db.User
 import org.leftbrained.uptaskapp.db.connectToDb
 import org.leftbrained.uptaskapp.ui.theme.AppTheme
@@ -118,7 +119,7 @@ fun RegisterActivity(navController: NavController) {
             ) {
                 Text(text = stringResource(R.string.sign_up))
                 Spacer(Modifier.size(8.dp))
-                Icon(Icons.Rounded.ArrowForward, "Arrow forward icon")
+                Icon(Icons.AutoMirrored.Rounded.ArrowForward, "Arrow forward icon")
             }
             Text(
                 stringResource(R.string.want_to_sign_in_instead),
@@ -131,10 +132,4 @@ fun RegisterActivity(navController: NavController) {
             }
         }
     }
-}
-
-@Preview(showSystemUi = true)
-@Composable
-fun RegisterActivityPreview() {
-    RegisterActivity(navController = NavController(LocalContext.current))
 }

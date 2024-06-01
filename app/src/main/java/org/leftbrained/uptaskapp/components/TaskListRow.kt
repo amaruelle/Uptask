@@ -25,7 +25,7 @@ import androidx.navigation.NavController
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.db.TaskList
-import org.leftbrained.uptaskapp.dialogs.ModifyTaskListDialog
+import org.leftbrained.uptaskapp.ui.dialogs.ModifyTaskListDialog
 
 @Composable
 fun TaskListRow(taskList: TaskList, navController: NavController, userId: Int, vm: DatabaseStateViewmodel = viewModel()) {

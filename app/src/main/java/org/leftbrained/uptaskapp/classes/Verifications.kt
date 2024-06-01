@@ -8,7 +8,7 @@ import org.leftbrained.uptaskapp.R
 import org.leftbrained.uptaskapp.db.Tag
 import org.leftbrained.uptaskapp.db.UptaskDb
 
-object Checks {
+object Verifications {
     fun emptyCheck(
         name: String,
         context: Context

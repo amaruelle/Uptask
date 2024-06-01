@@ -1,4 +1,4 @@
-package org.leftbrained.uptaskapp.classes
+package org.leftbrained.uptaskapp.other
 
 import android.content.SharedPreferences
 import kotlinx.datetime.LocalDate

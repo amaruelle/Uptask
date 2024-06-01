@@ -1,4 +1,4 @@
-package org.leftbrained.uptaskapp.classes
+package org.leftbrained.uptaskapp.reminders
 
 import android.app.NotificationManager
 import android.content.BroadcastReceiver

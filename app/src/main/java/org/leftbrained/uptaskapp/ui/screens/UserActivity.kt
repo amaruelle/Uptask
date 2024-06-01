@@ -1,4 +1,4 @@
-package org.leftbrained.uptaskapp
+package org.leftbrained.uptaskapp.ui.screens
 
 import android.app.Activity
 import android.content.Context
@@ -8,13 +8,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.Email
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.leftbrained.uptaskapp.R
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.User
 import org.leftbrained.uptaskapp.db.connectToDb
@@ -48,6 +54,18 @@ fun UserActivity(navController: NavController, userId: Int) {
     val userName = transaction {
         val user = User.findById(userId)
         user?.login ?: context.getString(R.string.no_login)
+    }
+    var isClearedUsername by remember {
+        mutableStateOf(false)
+    }
+    var isClearedPassword by remember {
+        mutableStateOf(false)
+    }
+    var isClearedPassCur by remember {
+        mutableStateOf(false)
+    }
+    var isSure by remember {
+        mutableStateOf(false)
     }
     var userNameEdit by remember { mutableStateOf(userName) }
     var password by remember { mutableStateOf("") }
@@ -99,31 +117,68 @@ fun UserActivity(navController: NavController, userId: Int) {
                 )
                 OutlinedTextField(
                     value = userNameEdit,
-                    onValueChange = { userNameEdit = it },
-                    label = { Text(stringResource(R.string.login)) }
+                    onValueChange = {
+                        userNameEdit = it
+                        isClearedUsername = it.isNotEmpty()
+                    },
+                    label = { Text(stringResource(R.string.login)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Rounded.Email, "Password icon") },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = { userNameEdit = "" },
+                            enabled = isClearedUsername
+                        ) { Icon(Icons.Rounded.Clear, "Clear icon") }
+                    },
                 )
                 OutlinedTextField(
                     value = currentPass,
-                    onValueChange = { currentPass = it },
-                    label = { Text(stringResource(R.string.current_password)) }
-                )
+                    onValueChange = {
+                        currentPass = it
+                        isClearedPassCur = it.isNotEmpty()
+                    },
+                    label = { Text(stringResource(R.string.current_password)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Rounded.Lock, "Password icon") },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = { currentPass = "" },
+                            enabled = isClearedPassCur
+                        ) { Icon(Icons.Rounded.Clear, "Clear icon") }
+                    },
+
+                    )
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
-                    label = { Text(stringResource(R.string.new_password)) }
+                    onValueChange = {
+                        password = it
+                        isClearedPassword = it.isNotEmpty()
+                    },
+                    label = { Text(stringResource(R.string.new_password)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Rounded.Lock, "Password icon") },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = { password = "" },
+                            enabled = isClearedPassword
+                        ) { Icon(Icons.Rounded.Clear, "Clear icon") }
+                    },
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
                         onClick = {
                             transaction {
                                 val user = User.findById(userId)
-                                println(
-                                    "User: ${user?.login}, ${user?.password}, $currentPass, $password"
-                                )
                                 if (user?.password == currentPass) {
                                     if (password.isNotEmpty() && password != currentPass && userName.isNotEmpty()) {
                                         user.login = userNameEdit
                                         user.password = password
+                                        Toast.makeText(
+                                            navController.context,
+                                            context.getString(R.string.info_changed),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        navController.navigate("taskList/$userId")
                                     } else {
                                         Toast.makeText(
                                             navController.context,
@@ -139,12 +194,22 @@ fun UserActivity(navController: NavController, userId: Int) {
                                     ).show()
                                 }
                             }
-                        }
+                        },
+                        modifier = Modifier.weight(1f)
                     ) {
                         Text(stringResource(R.string.save))
                     }
-                    Button(
+                    OutlinedButton(
                         onClick = {
+                            if (!isSure) {
+                                isSure = true
+                                Toast.makeText(
+                                    navController.context,
+                                    context.getString(R.string.is_sure),
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                return@OutlinedButton
+                            }
                             transaction {
                                 UptaskDb.Users.deleteAll()
                                 UptaskDb.UserTasks.deleteAll()
@@ -162,7 +227,8 @@ fun UserActivity(navController: NavController, userId: Int) {
                                 apply()
                             }
                             navController.navigate("auth")
-                        }
+                        },
+                        modifier = Modifier.weight(1f)
                     ) {
                         Text(stringResource(R.string.clear_database))
                     }

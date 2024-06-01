@@ -37,4 +37,6 @@ class TaskViewModel : ViewModel() {
     fun removeTask(taskId: Int) = transaction {
         UserTask.find(UptaskDb.UserTasks.id eq taskId).elementAt(0).delete()
     }
+
+    fun getNextTask() = transaction { (UserTask.all().count() + 1).toInt() }
 }

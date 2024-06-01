@@ -89,4 +89,10 @@
     <string name="_1_day">1 день</string>
     <string name="stats">Статистика</string>
     <string name="none">Нет</string>
+    <string name="is_sure">Если вы уверены, нажмите еще раз</string>
+    <string name="no_date_period_selected">Не выбран временной период</string>
+    <string name="copy">Копировать</string>
+    <string name="click_copy">Нажмите, чтобы скопировать его</string>
+    <string name="here_is_your_export">Вот ваш экспорт</string>
+    <string name="info_changed">Данные были изменены</string>
 </resources>

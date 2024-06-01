@@ -1,4 +1,4 @@
-package org.leftbrained.uptaskapp.dialogs
+package org.leftbrained.uptaskapp.ui.dialogs
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

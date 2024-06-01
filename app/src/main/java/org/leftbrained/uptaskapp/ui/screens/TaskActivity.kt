@@ -1,4 +1,4 @@
-package org.leftbrained.uptaskapp
+package org.leftbrained.uptaskapp.ui.screens
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -15,13 +15,11 @@ import androidx.navigation.NavController
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.leftbrained.uptaskapp.classes.Exporter
 import org.leftbrained.uptaskapp.components.TaskView
 import org.leftbrained.uptaskapp.db.*
-import org.leftbrained.uptaskapp.dialogs.AddTaskDialog
-import org.leftbrained.uptaskapp.dialogs.FilterSortDialog
-import org.leftbrained.uptaskapp.dialogs.SettingsDialog
-import org.leftbrained.uptaskapp.viewmodel.UserViewModel
+import org.leftbrained.uptaskapp.ui.dialogs.AddTaskDialog
+import org.leftbrained.uptaskapp.ui.dialogs.FilterSortDialog
+import org.leftbrained.uptaskapp.ui.dialogs.SettingsDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

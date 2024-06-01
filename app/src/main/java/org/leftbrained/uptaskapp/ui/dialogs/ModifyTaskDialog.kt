@@ -1,9 +1,6 @@
-package org.leftbrained.uptaskapp.dialogs
+package org.leftbrained.uptaskapp.ui.dialogs
 
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -64,18 +61,17 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.leftbrained.uptaskapp.R
-import org.leftbrained.uptaskapp.classes.AlarmReceiver
-import org.leftbrained.uptaskapp.classes.Checks
-import org.leftbrained.uptaskapp.classes.Checks.tagAddedCheck
-import org.leftbrained.uptaskapp.classes.Checks.tagCheck
-import org.leftbrained.uptaskapp.classes.Checks.tagExistsCheck
-import org.leftbrained.uptaskapp.classes.Logs
+import org.leftbrained.uptaskapp.classes.Verifications
+import org.leftbrained.uptaskapp.classes.Verifications.tagAddedCheck
+import org.leftbrained.uptaskapp.classes.Verifications.tagCheck
+import org.leftbrained.uptaskapp.classes.Verifications.tagExistsCheck
+import org.leftbrained.uptaskapp.other.Logs
 import org.leftbrained.uptaskapp.db.DatabaseStateViewmodel
 import org.leftbrained.uptaskapp.db.Tag
 import org.leftbrained.uptaskapp.db.UptaskDb
 import org.leftbrained.uptaskapp.db.UserTask
+import org.leftbrained.uptaskapp.reminders.ReminderUtils
 import org.leftbrained.uptaskapp.viewmodel.TaskViewModel
-import java.util.Locale
 import kotlin.time.Duration
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -167,13 +163,17 @@ fun ModifyTaskDialog(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(stringResource(R.string.name)) },
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = desc ?: "",
                     onValueChange = { desc = it },
                     label = { Text(stringResource(R.string.description)) },
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .fillMaxWidth()
                 )
                 Slider(
                     value = priority.toFloat(),
@@ -183,11 +183,16 @@ fun ModifyTaskDialog(
                     modifier = Modifier.padding(top = 16.dp),
                 )
                 Text(stringResource(R.string.priority_label, priority))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
+                ) {
                     OutlinedButton(
                         onClick = {
                             showDatePicker = true
-                        }, modifier = Modifier.padding(top = 16.dp)
+                        }, modifier = Modifier.weight(1f)
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -202,7 +207,9 @@ fun ModifyTaskDialog(
                     }
                     TextButton(onClick = {
                         dueDate = null
-                    }) {
+                    }, modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .weight(0.5f)) {
                         Text(stringResource(R.string.clear))
                     }
                 }
@@ -238,11 +245,16 @@ fun ModifyTaskDialog(
                         }
                     }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
+                ) {
                     OutlinedButton(
                         onClick = {
                             showTimePicker = true
-                        }, modifier = Modifier.padding(top = 16.dp)
+                        }, modifier = Modifier.weight(1f)
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -257,7 +269,9 @@ fun ModifyTaskDialog(
                     }
                     TextButton(onClick = {
                         dueTime = ""
-                    }) {
+                    }, modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .weight(0.5f)) {
                         Text(stringResource(R.string.clear))
                     }
                 }
@@ -298,6 +312,7 @@ fun ModifyTaskDialog(
                         modifier = Modifier
                             .menuAnchor()
                             .fillMaxWidth()
+                            .padding(top = 12.dp)
                     )
                     ExposedDropdownMenu(expanded = showReminderDropdown,
                         onDismissRequest = { showReminderDropdown = false }) {
@@ -355,11 +370,11 @@ fun ModifyTaskDialog(
                         onClick = {},
                         label = { Text(stringResource(R.string.pick_attachment)) },
                         leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Rounded.AddCircle,
-                            contentDescription = "Add attachment icon"
-                        )
-                    })
+                            Icon(
+                                imageVector = Icons.Rounded.AddCircle,
+                                contentDescription = "Add attachment icon"
+                            )
+                        })
                 }
                 Row(
                     Modifier
@@ -396,39 +411,19 @@ fun ModifyTaskDialog(
                         .padding(top = 16.dp)
                 ) {
                     Button(onClick = {
-                        if (!Checks.emptyCheck(name, context)) return@Button
-                        if (!Checks.priorityCheck(priority, context)) return@Button
+                        if (!Verifications.emptyCheck(name, context)) return@Button
+                        if (!Verifications.priorityCheck(priority, context)) return@Button
                         if (dueDate != null) {
                             dueDate =
                                 dueDate!! + Duration.parse("${timePickerState.hour}h ${timePickerState.minute}m")
                             if (selectedReminder.second != Duration.ZERO) {
-                                val alarmManager =
-                                    context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                                val intent = Intent(context, AlarmReceiver::class.java)
-                                intent.putExtra("taskName", name)
-                                intent.putExtra("taskDesc", desc)
-                                intent.putExtra("taskDueDate",
-                                    dueDate!!.toLocalDateTime(TimeZone.UTC).let {
-                                        "${it.dayOfMonth} ${
-                                            it.month.name.let { name ->
-                                                name.substring(0, 1)
-                                                    .uppercase(Locale.ROOT) + name.substring(1)
-                                                    .lowercase(Locale.ROOT)
-                                            }
-                                        }, ${it.year} ${it.hour}:${it.minute}"
-                                    })
-                                val newTaskId = transaction { (UserTask.all().count() + 1).toInt() }
-                                val pendingIntent = PendingIntent.getBroadcast(
-                                    context, newTaskId, intent, PendingIntent.FLAG_IMMUTABLE
+                                ReminderUtils.setReminder(
+                                    context,
+                                    name,
+                                    desc ?: "None",
+                                    dueDate,
+                                    selectedReminder
                                 )
-                                val reminderMillis = dueDate!! - selectedReminder.second
-                                if (alarmManager.canScheduleExactAlarms()) {
-                                    alarmManager.setExact(
-                                        AlarmManager.RTC_WAKEUP,
-                                        reminderMillis.toEpochMilliseconds(),
-                                        pendingIntent
-                                    )
-                                }
                             }
                         }
                         transaction {
